@@ -1,11 +1,2 @@
-
-  # Coach-Student Connection App
-
-  This is a code bundle for Coach-Student Connection App. The original project is available at https://www.figma.com/design/AWM2t73MBXRSl2txzqW07K/Coach-Student-Connection-App.
-
-  ## Running the code
-
-  Run `npm i` to install the dependencies.
-
-  Run `npm run dev` to start the development server.
-  
+# coachconnect
+Coach Connect is a UMD marketplace that is designed to pair students to student athletes for affordable, sport-specific training. It solves the high cost of pro coaching and the lack of cheap recreational coaches as alternatives. Features will include IMLeagues, skill verification, video portfolio, and a booking system to prepare for lessons.
