@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router";
+import { saveCoachToDB } from "../utils/api";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -382,7 +383,7 @@ export default function CoachOnboarding() {
     }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // Clear previous errors
     setErrors({
       name: "",

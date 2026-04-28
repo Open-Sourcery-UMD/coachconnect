@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router";
+import { saveStudentToDB } from "../utils/api";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
@@ -141,7 +142,7 @@ export default function StudentOnboarding() {
     return email.endsWith('@terpmail.umd.edu') || email.endsWith('@umd.edu');
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // Clear previous errors
     setErrors({
       name: "",
@@ -250,7 +251,8 @@ export default function StudentOnboarding() {
       localStorage.setItem("students", JSON.stringify(students));
       
       // Navigate to results page with sport interests
-      navigate("/results", { state: { sports: formData.interests } });
+      try { await saveStudentToDB(formData); } catch(e) { console.error(e); }
+        navigate("/results", { state: { sports: formData.interests } });
     }
   };
 

@@ -39,7 +39,7 @@ export default function Login() {
     if (emailErr || passwordErr) return
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      navigate('/home')
+      navigate('/results')
     } catch (err: any) {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setAuthError('Invalid email or password')
@@ -52,7 +52,7 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     try {
       await signInWithPopup(auth, googleProvider)
-      navigate('/home')
+      navigate('/results')
     } catch (err) {
       setAuthError('Google sign in failed. Please try again.')
     }
@@ -217,3 +217,5 @@ export default function Login() {
     </div>
   )
 }
+
+

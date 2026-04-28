@@ -1,375 +1,238 @@
-import { useEffect, useState, useMemo } from "react";
-import { useLocation, useNavigate } from "react-router";
-import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
-import { ArrowLeft, LogOut, Mail, Phone, DollarSign, Clock, Star, AlertCircle, X, Calendar } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { useEffect, useState, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router';
+import { Button } from '../components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { LogOut, Mail, Phone, Star, AlertCircle, Calendar, SlidersHorizontal } from 'lucide-react';
+import { getCoaches } from '../utils/api';
+import { auth } from '../firebase';
+import { signOut } from 'firebase/auth';
 
 interface Coach {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  expertise: string[];
-  bio: string;
-  experience: string;
-  rate: string;
-  availability: string[];
-  type: string;
-  profilePicture?: string;
-  gender?: string;
-  competitionLevel?: string[];
+  id: string; name: string; email: string; phone: string;
+  expertise: string[]; coaching_style: string; rate: string;
+  availability: string[]; role: string; gender?: string; competition_level?: string[];
 }
+
+const SPORTS = ['Soccer', 'Basketball', 'Tennis', 'Volleyball', 'Baseball', 'Softball', 'Swimming', 'Track', 'Football', 'Golf'];
+const LEVELS = ['Recreational', 'Competitive', 'Elite'];
 
 export default function Results() {
   const navigate = useNavigate();
   const location = useLocation();
   const sports = useMemo(() => (location.state?.sports as string[]) || [], [location.state?.sports]);
-  const [matchedCoaches, setMatchedCoaches] = useState<Coach[]>([]);
+  const [coaches, setCoaches] = useState<Coach[]>([]);
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selectedSports, setSelectedSports] = useState<string[]>(sports);
+  const [selectedLevel, setSelectedLevel] = useState<string>('');
+  const [maxRate, setMaxRate] = useState<string>('');
 
-  useEffect(() => {
-    // Load coaches from localStorage and filter by sports
-    const storedCoaches = JSON.parse(localStorage.getItem("coaches") || "[]") as Coach[];
+  useEffect(() => { fetchCoaches(); }, []);
 
-    // Filter coaches that have at least one matching sport
-    const filtered = storedCoaches.filter((coach) =>
-      coach.expertise.some((sport) => sports.includes(sport))
-    );
-
-    setMatchedCoaches(filtered);
-  }, [sports]);
-
-  const handleViewProfile = (coach: Coach) => {
-    setSelectedCoach(coach);
-    setIsProfileOpen(true);
+  const fetchCoaches = async () => {
+    setLoading(true);
+    try { const data = await getCoaches(); setCoaches(data); } catch (err) { console.error(err); }
+    setLoading(false);
   };
 
-  const handleConnect = (coach: Coach) => {
-    alert(`Connection request sent to ${coach.name}! They will receive your contact information.`);
-    setIsProfileOpen(false);
-  };
+  const handleLogout = async () => { await signOut(auth); navigate('/'); };
+  const toggleSport = (sport: string) => { setSelectedSports(prev => prev.includes(sport) ? prev.filter(s => s !== sport) : [...prev, sport]); };
 
-  // Helper to organize availability by day
+  const filteredCoaches = coaches.filter(coach => {
+    if (selectedSports.length > 0 && !coach.expertise.some(s => selectedSports.includes(s))) return false;
+    if (selectedLevel && !(coach.competition_level || []).includes(selectedLevel)) return false;
+    if (maxRate && parseFloat(coach.rate || '0') > parseFloat(maxRate)) return false;
+    return true;
+  });
+
+  const handleViewProfile = (coach: Coach) => { setSelectedCoach(coach); setIsProfileOpen(true); };
+  const handleConnect = (coach: Coach) => { alert('Connection request sent to ' + coach.name + '!'); setIsProfileOpen(false); };
+
   const getScheduleByDay = (availability: string[]) => {
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const schedule: Record<string, string[]> = {};
-
-    days.forEach(day => {
-      schedule[day] = availability
-        .filter(slot => slot.startsWith(day))
-        .map(slot => slot.replace(`${day} `, ''));
-    });
-
+    days.forEach(day => { schedule[day] = availability.filter(slot => slot.startsWith(day)).map(slot => slot.replace(day + ' ', '')); });
     return schedule;
   };
 
   return (
-    <div className="min-h-screen p-4 py-8 relative overflow-hidden" style={{ fontFamily: 'Apple Chancery, cursive' }}>
-      {/* Shell pattern background */}
-      <div className="fixed inset-0 opacity-5 -z-10">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="shell-pattern" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
-              <g transform="translate(60, 60)">
-                <path d="M 0,-30 Q 20,-25 25,-10 Q 28,0 25,10 Q 20,25 0,30 Q -20,25 -25,10 Q -28,0 -25,-10 Q -20,-25 0,-30 Z"
-                      fill="#666" opacity="0.3"/>
-                <path d="M 0,-25 L 0,25 M -15,-15 L 15,15 M 15,-15 L -15,15 M -20,0 L 20,0"
-                      stroke="#666" strokeWidth="1.5" opacity="0.2"/>
-                <circle cx="0" cy="0" r="5" fill="#666" opacity="0.4"/>
-              </g>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#shell-pattern)"/>
-        </svg>
+    <div className='min-h-screen' style={{ background: 'linear-gradient(135deg, #E21833 0%, #FF6B35 50%, #FFD200 100%)' }}>
+      <div className='px-6 py-4 flex items-center justify-between sticky top-0 z-20' style={{ background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)' }}>
+        <h1 className='text-2xl font-black text-white' style={{ fontFamily: 'Apple Chancery, cursive' }}>Coach Connect</h1>
+        <p className='text-white/80 text-sm font-medium'>{loading ? 'Loading...' : filteredCoaches.length + ' coaches found'}</p>
+        <Button variant='outline' onClick={handleLogout} className='bg-[#E21833] text-white hover:bg-red-700 border-0' style={{ cursor: 'pointer' }}>
+          <LogOut className='w-4 h-4 mr-2' />Logout
+        </Button>
       </div>
 
-      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex-1"></div>
-          <div className="flex-1 text-center">
-            <h1 className="text-5xl font-black text-gray-900" style={{ fontFamily: 'Apple Chancery, cursive' }}>Your Matched Coaches</h1>
-          </div>
-          <div className="flex-1 flex justify-end">
-            <Button variant="destructive" onClick={() => navigate("/")} className="bg-red-600 hover:bg-red-700" style={{ cursor: 'pointer' }}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+      <div className='flex max-w-7xl mx-auto px-4 py-6 gap-6'>
+        <div className='w-56 flex-shrink-0'>
+          <div className='rounded-2xl p-5 sticky top-20 space-y-5' style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <div className='flex items-center gap-2'>
+              <SlidersHorizontal className='w-4 h-4 text-gray-600' />
+              <h2 className='font-bold text-white'>Filters</h2>
+            </div>
+            <div>
+              <p className='text-xs font-bold text-white/60 uppercase tracking-wider mb-3'>Sports</p>
+              <div className='space-y-2'>
+                {SPORTS.map(sport => (
+                  <label key={sport} className='flex items-center gap-2 cursor-pointer'>
+                    <div onClick={() => toggleSport(sport)} className='w-4 h-4 rounded border-2 flex items-center justify-center transition-all'
+                      style={{ background: selectedSports.includes(sport) ? '#E21833' : 'white', borderColor: selectedSports.includes(sport) ? '#E21833' : '#ddd', cursor: 'pointer' }}>
+                      {selectedSports.includes(sport) && <span className='text-white text-xs font-bold'>v</span>}
+                    </div>
+                    <span className='text-sm text-white/90'>{sport}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className='text-xs font-bold text-white/60 uppercase tracking-wider mb-3'>Level</p>
+              <div className='space-y-2'>
+                {LEVELS.map(level => (
+                  <label key={level} className='flex items-center gap-2 cursor-pointer'>
+                    <div onClick={() => setSelectedLevel(selectedLevel === level ? '' : level)} className='w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all'
+                      style={{ background: selectedLevel === level ? '#FFD200' : 'white', borderColor: selectedLevel === level ? '#FFD200' : '#ddd', cursor: 'pointer' }}>
+                      {selectedLevel === level && <div className='w-2 h-2 rounded-full bg-gray-800'></div>}
+                    </div>
+                    <span className='text-sm text-white/90'>{level}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className='text-xs font-bold text-white/60 uppercase tracking-wider mb-2'>Max Pricing ($/hr)</p>
+              <input type='number' placeholder='Any rate' value={maxRate} onChange={e => setMaxRate(e.target.value)}
+                className='w-full rounded-lg px-3 py-2 text-sm focus:outline-none' style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: 'white' }} />
+            </div>
+            {(selectedSports.length > 0 || selectedLevel || maxRate) && (
+              <button onClick={() => { setSelectedSports([]); setSelectedLevel(''); setMaxRate(''); }}
+                className='w-full text-sm text-red-500 hover:text-red-700 font-semibold' style={{ cursor: 'pointer', background: 'none', border: 'none' }}>
+                Clear all filters
+              </button>
+            )}
           </div>
         </div>
 
-        {matchedCoaches.length === 0 ? (
-          <Alert className="bg-white border-2 border-gray-200">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>No Coaches Available</AlertTitle>
-            <AlertDescription>
-              We couldn't find any coaches for the sports you selected ({sports.join(", ")}).
-              <br />
-              Please check back later or try selecting different sports. Coaches are constantly joining our platform!
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-center text-lg text-gray-700 font-semibold">
-              Found {matchedCoaches.length} {matchedCoaches.length === 1 ? "coach" : "coaches"} matching your interests
-            </p>
-
-            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
-              {matchedCoaches.map((coach) => (
-                <div key={coach.id} className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden border-2 border-gray-200">
-                  {/* Top Badge */}
-                  <div className="bg-[#FFD200] text-black text-xs font-bold px-4 py-2 text-center">
-                    ⭐ TOP PRO
-                  </div>
-
-                  <div className="p-6">
-                    {/* Profile Section */}
-                    <div className="flex gap-4 mb-4">
-                      <div className="w-24 h-24 flex-shrink-0">
-                        {coach.profilePicture ? (
-                          <img
-                            src={coach.profilePicture}
-                            alt={coach.name}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-3xl font-bold">
-                            {coach.name.charAt(0)}
-                          </div>
-                        )}
+        <div className='flex-1'>
+          {loading ? (
+            <div className='flex items-center justify-center h-64'>
+              <p className='text-gray-500 text-lg'>Loading coaches...</p>
+            </div>
+          ) : filteredCoaches.length === 0 ? (
+            <Alert className='bg-white border-2 border-gray-200'>
+              <AlertCircle className='h-4 w-4' />
+              <AlertTitle>No Coaches Found</AlertTitle>
+              <AlertDescription>Try adjusting your filters!</AlertDescription>
+            </Alert>
+          ) : (
+            <div className='grid gap-5 grid-cols-1 lg:grid-cols-2'>
+              {filteredCoaches.map((coach) => (
+                <div key={coach.id} className='bg-white rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-100'>
+                  <div className='p-5'>
+                    <div className='flex gap-4 mb-3'>
+                      <div className='w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center text-white text-2xl font-black'
+                        style={{ background: 'linear-gradient(135deg, #E21833, #FFD200)' }}>
+                        {coach.name.charAt(0)}
                       </div>
-
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900">{coach.name.toUpperCase()}</h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="font-semibold">5.0</span>
-                          <span className="text-gray-400">(New Coach)</span>
+                      <div className='flex-1 min-w-0'>
+                        <h3 className='text-lg font-bold text-gray-900 truncate'>{coach.name}</h3>
+                        <div className='flex items-center gap-1 text-sm text-gray-500 mt-0.5'>
+                          <Star className='w-3.5 h-3.5 fill-yellow-400 text-yellow-400' />
+                          <span className='font-semibold text-gray-700'>5.0</span>
+                          <span> New Coach</span>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">📍 College Park, MD</p>
-                        <Badge variant="outline" className="mt-2 text-xs">NEARBY PRO</Badge>
+                        <p className='text-xs text-gray-500 mt-0.5'>College Park, MD</p>
+                      </div>
+                      <div className='text-right flex-shrink-0'>
+                        <p className='text-xl font-black text-gray-900'></p>
+                        <p className='text-xs text-gray-500'>/hour</p>
                       </div>
                     </div>
-
-                    {/* Bio */}
-                    <p className="text-sm text-gray-700 mb-4 line-clamp-3">
-                      {coach.bio || "Passionate coach dedicated to helping students achieve their athletic goals."}
-                    </p>
-
-                    {/* Teaching Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {coach.expertise.map((exp) => (
-                        <Badge
-                          key={exp}
-                          variant="secondary"
-                          className="text-xs font-semibold bg-gray-100 text-gray-800 hover:bg-gray-200"
-                        >
-                          TEACHES {exp.toUpperCase()}
-                        </Badge>
-                      ))}
-                      {coach.competitionLevel && Array.isArray(coach.competitionLevel) && coach.competitionLevel.map((level: string) => (
-                        <Badge
-                          key={level}
-                          variant="secondary"
-                          className="text-xs font-semibold bg-gray-100 text-gray-800 hover:bg-gray-200"
-                        >
-                          {level.toUpperCase()}
-                        </Badge>
+                    <p className='text-sm text-gray-600 mb-3 line-clamp-2'>{coach.coaching_style || 'Passionate coach dedicated to helping students.'}</p>
+                    <div className='flex flex-wrap gap-1.5 mb-4'>
+                      {coach.expertise.map(exp => (
+                        <span key={exp} className='px-2 py-0.5 rounded-full text-xs font-semibold' style={{ background: '#FFF3F4', color: '#E21833' }}>{exp}</span>
                       ))}
                     </div>
-
-                    {/* Price and Button */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                      <div>
-                        <p className="text-xs text-gray-500">From</p>
-                        <p className="text-2xl font-bold text-gray-900">
-                          ${coach.rate || "50"}<span className="text-sm font-normal text-gray-600">/hr.</span>
-                        </p>
-                      </div>
-                      <Button
-                        className="bg-black hover:bg-gray-800 text-white px-6 py-2 rounded-lg font-semibold"
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => handleViewProfile(coach)}
-                      >
-                        VIEW PROFILE
-                      </Button>
-                    </div>
+                    <Button className='w-full font-semibold rounded-xl' style={{ background: '#E21833', color: 'white', cursor: 'pointer' }} onClick={() => handleViewProfile(coach)}>
+                      View Profile
+                    </Button>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      </div>
 
-        {/* Profile Detail Dialog */}
-        <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            {selectedCoach && (
-              <div className="space-y-6">
-                <DialogHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex gap-4 flex-1">
-                      <div className="w-32 h-32 flex-shrink-0">
-                        {selectedCoach.profilePicture ? (
-                          <img
-                            src={selectedCoach.profilePicture}
-                            alt={selectedCoach.name}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-5xl font-bold">
-                            {selectedCoach.name.charAt(0)}
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+          {selectedCoach && (
+            <div className='space-y-5'>
+              <DialogHeader>
+                <div className='flex gap-4'>
+                  <div className='w-20 h-20 flex-shrink-0 rounded-full flex items-center justify-center text-white text-3xl font-black'
+                    style={{ background: 'linear-gradient(135deg, #E21833, #FFD200)' }}>
+                    {selectedCoach.name.charAt(0)}
+                  </div>
+                  <div className='flex-1'>
+                    <DialogTitle className='text-2xl font-bold'>{selectedCoach.name}</DialogTitle>
+                    <DialogDescription className='sr-only'>Profile for {selectedCoach.name}</DialogDescription>
+                    <div className='flex items-center gap-1 mt-1'>
+                      <Star className='w-4 h-4 fill-yellow-400 text-yellow-400' />
+                      <span className='font-semibold'>5.0</span>
+                    </div>
+                    <div className='flex gap-2 flex-wrap mt-2'>
+                      {selectedCoach.expertise.map(exp => (
+                        <span key={exp} className='px-2 py-0.5 rounded-full text-xs font-semibold' style={{ background: '#FFF3F4', color: '#E21833' }}>{exp}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className='text-right'>
+                    <p className='text-3xl font-black'></p>
+                    <p className='text-sm text-gray-500'>/hour</p>
+                  </div>
+                </div>
+              </DialogHeader>
+              <div>
+                <h3 className='font-bold text-gray-800 mb-1'>About</h3>
+                <p className='text-gray-600 text-sm'>{selectedCoach.coaching_style || 'Passionate coach.'}</p>
+              </div>
+              <div>
+                <h3 className='font-bold text-gray-800 mb-2 flex items-center gap-2'><Calendar className='w-4 h-4' />Availability</h3>
+                <div className='border rounded-xl overflow-hidden text-sm'>
+                  {Object.entries(getScheduleByDay(selectedCoach.availability || [])).map(([day, times]) => (
+                    <div key={day} className='border-b last:border-b-0 grid grid-cols-3 gap-2 p-2.5 hover:bg-gray-50'>
+                      <div className='font-semibold text-gray-700'>{day.slice(0, 3)}</div>
+                      <div className='col-span-2'>
+                        {times.length > 0 ? (
+                          <div className='flex flex-wrap gap-1'>
+                            {times.map((time, idx) => (<span key={idx} className='px-2 py-0.5 rounded-full text-xs bg-green-50 text-green-700 border border-green-200'>{time}</span>))}
                           </div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <DialogTitle className="text-3xl font-bold mb-2">{selectedCoach.name.toUpperCase()}</DialogTitle>
-                        <DialogDescription className="sr-only">
-                          View detailed profile for {selectedCoach.name}
-                        </DialogDescription>
-                        <div className="flex items-center gap-2 text-lg mb-2">
-                          <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                          <span className="font-semibold">5.0</span>
-                          <span className="text-gray-400">(New Coach)</span>
-                        </div>
-                        <p className="text-base text-gray-600 mb-2">📍 College Park, MD</p>
-                        <div className="flex gap-2 flex-wrap">
-                          {selectedCoach.expertise.map((exp) => (
-                            <Badge key={exp} variant="secondary" className="text-sm">
-                              {exp}
-                            </Badge>
-                          ))}
-                        </div>
+                        ) : <span className='text-gray-400 text-xs italic'>Not available</span>}
                       </div>
                     </div>
-                  </div>
-                </DialogHeader>
-
-                {/* About Section */}
-                <div>
-                  <h3 className="text-xl font-bold mb-2">About</h3>
-                  <p className="text-gray-700 leading-relaxed">{selectedCoach.bio}</p>
-                </div>
-
-                {/* Rate */}
-                <div>
-                  <h3 className="text-xl font-bold mb-2">Pricing</h3>
-                  <p className="text-3xl font-bold text-gray-900">
-                    ${selectedCoach.rate || "50"}<span className="text-lg font-normal text-gray-600">/hour</span>
-                  </p>
-                </div>
-
-                {/* Weekly Schedule */}
-                <div>
-                  <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
-                    Weekly Availability
-                  </h3>
-                  <div className="border rounded-lg overflow-hidden">
-                    {Object.entries(getScheduleByDay(selectedCoach.availability)).map(([day, times]) => (
-                      <div key={day} className="border-b last:border-b-0">
-                        <div className="grid grid-cols-4 gap-4 p-3 hover:bg-gray-50">
-                          <div className="font-semibold text-gray-900">{day}</div>
-                          <div className="col-span-3">
-                            {times.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
-                                {times.map((time, idx) => (
-                                  <Badge key={idx} variant="outline" className="bg-green-50 border-green-200 text-green-700">
-                                    {time}
-                                  </Badge>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-gray-400 italic">Not available</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Reviews Section */}
-                <div>
-                  <h3 className="text-xl font-bold mb-3">Reviews</h3>
-                  <div className="space-y-4">
-                    {/* Sample Review 1 */}
-                    <div className="border rounded-lg p-4 bg-gray-50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          ))}
-                        </div>
-                        <span className="font-semibold">Sarah M.</span>
-                        <span className="text-gray-400 text-sm">• 2 weeks ago</span>
-                      </div>
-                      <p className="text-gray-700">
-                        Excellent coach! Very knowledgeable and patient. My skills have improved significantly in just a few sessions.
-                      </p>
-                    </div>
-
-                    {/* Sample Review 2 */}
-                    <div className="border rounded-lg p-4 bg-gray-50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star key={star} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          ))}
-                        </div>
-                        <span className="font-semibold">Mike T.</span>
-                        <span className="text-gray-400 text-sm">• 1 month ago</span>
-                      </div>
-                      <p className="text-gray-700">
-                        Great experience! The coach really understands how to break down complex techniques into manageable steps.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div>
-                  <h3 className="text-xl font-bold mb-3">Contact Information</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-5 h-5 text-gray-500" />
-                      <span className="text-gray-700">{selectedCoach.email}</span>
-                    </div>
-                    {selectedCoach.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-gray-500" />
-                        <span className="text-gray-700">{selectedCoach.phone}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Connect Button */}
-                <div className="flex gap-3 pt-4 border-t">
-                  <Button
-                    className="flex-1 bg-black hover:bg-gray-800 text-white py-6 text-lg font-semibold"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleConnect(selectedCoach)}
-                  >
-                    Connect with Coach
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="px-6"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => setIsProfileOpen(false)}
-                  >
-                    Close
-                  </Button>
+                  ))}
                 </div>
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
+              <div>
+                <h3 className='font-bold text-gray-800 mb-2'>Contact</h3>
+                <div className='space-y-1.5'>
+                  <div className='flex items-center gap-2 text-sm'><Mail className='w-4 h-4 text-gray-400' /><span>{selectedCoach.email}</span></div>
+                  {selectedCoach.phone && <div className='flex items-center gap-2 text-sm'><Phone className='w-4 h-4 text-gray-400' /><span>{selectedCoach.phone}</span></div>}
+                </div>
+              </div>
+              <div className='flex gap-3 pt-2'>
+                <Button className='flex-1 py-5 text-base font-semibold rounded-xl' style={{ background: '#E21833', color: 'white', cursor: 'pointer' }} onClick={() => handleConnect(selectedCoach)}>Connect with Coach</Button>
+                <Button variant='outline' className='rounded-xl' style={{ cursor: 'pointer' }} onClick={() => setIsProfileOpen(false)}>Close</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
