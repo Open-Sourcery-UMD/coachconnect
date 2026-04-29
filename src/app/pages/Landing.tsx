@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router";
+import { auth } from "../firebase";
+import { getUserProfile } from "../utils/api";
 import { useEffect } from "react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -91,7 +93,14 @@ export default function Landing() {
               </ul>
 
               <Button
-                onClick={() => navigate("/coach/onboarding")}
+                onClick={async () => {
+                  const user = auth.currentUser;
+                  if (user) {
+                    const profile = await getUserProfile(user.uid);
+                    if (profile) { navigate("/results"); return; }
+                  }
+                  navigate("/coach/onboarding");
+                }}
                 className="w-full text-white font-semibold text-lg py-6 rounded-3xl transition-all duration-300 hover:shadow-lg hover:shadow-[#E21833]/50 border-0 hover:scale-105 coach-button"
                 style={{
                   background: '#E21833',
@@ -150,7 +159,14 @@ export default function Landing() {
               </ul>
 
               <Button
-                onClick={() => navigate("/student/onboarding")}
+                onClick={async () => {
+                  const user = auth.currentUser;
+                  if (user) {
+                    const profile = await getUserProfile(user.uid);
+                    if (profile) { navigate("/results"); return; }
+                  }
+                  navigate("/student/onboarding");
+                }}
                 className="w-full text-black font-semibold text-lg py-6 rounded-3xl transition-all duration-300 hover:shadow-lg hover:shadow-[#FFD200]/50 border-0 hover:scale-105 student-button"
                 style={{
                   background: '#FFD200',

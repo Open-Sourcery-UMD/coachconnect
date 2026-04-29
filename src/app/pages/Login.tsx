@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Eye, EyeOff } from 'lucide-react'
 import { auth, googleProvider } from '../firebase'
+import { getUserProfile } from '../utils/api'
+import { getStudents } from '../utils/api'
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
 
 export default function Login() {
@@ -38,8 +40,12 @@ export default function Login() {
     setAuthError('')
     if (emailErr || passwordErr) return
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      navigate('/results')
+      const cred = await signInWithEmailAndPassword(auth, email, password)
+      const profile = await getUserProfile(cred.user.uid)
+      if (profile) {
+        if (profile.role === 'coach') { navigate('/my-students') }
+        else { navigate('/results') }
+      } else { navigate('/home') }
     } catch (err: any) {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setAuthError('Invalid email or password')
@@ -51,8 +57,12 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider)
-      navigate('/results')
+      const result = await signInWithPopup(auth, googleProvider)
+      const profile = await getUserProfile(result.user.uid)
+      if (profile) {
+        if (profile.role === 'coach') { navigate('/my-students') }
+        else { navigate('/results') }
+      } else { navigate('/home') }
     } catch (err) {
       setAuthError('Google sign in failed. Please try again.')
     }

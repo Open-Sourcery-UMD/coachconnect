@@ -1,173 +1,186 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
-import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { Badge } from "../components/ui/badge";
-import { ArrowLeft, LogOut, Mail, Users } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
+import { Button } from '../components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { LogOut, Mail, Phone, Users, SlidersHorizontal } from 'lucide-react';
+import { getStudents } from '../utils/api';
+import { auth } from '../firebase';
+import { signOut } from 'firebase/auth';
 
 interface Student {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  interests: string[];
-  goals: string;
-  level: string;
-  budget: string;
-  preferredTimes: string[];
-  type: string;
+  id: string; name: string; email: string; phone: string;
+  interests: string[]; goals: string; level: string; budget: string;
+  preferred_times: string[]; graduation_year: string; role: string;
 }
+
+const SPORTS = ['Soccer', 'Basketball', 'Tennis', 'Volleyball', 'Baseball', 'Softball', 'Swimming', 'Track', 'Football', 'Golf'];
+const LEVELS = ['beginner', 'intermediate', 'advanced'];
 
 export default function MyStudents() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const coachId = location.state?.coachId;
-  const [myStudents, setMyStudents] = useState<Student[]>([]);
-  const [coach, setCoach] = useState<any>(null);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selectedSports, setSelectedSports] = useState<string[]>([]);
+  const [selectedLevel, setSelectedLevel] = useState<string>('');
+  const [maxBudget, setMaxBudget] = useState<string>('');
+  const coachName = auth.currentUser?.displayName || 'Coach';
 
-  useEffect(() => {
-    // Load coach data
-    const coaches = JSON.parse(localStorage.getItem("coaches") || "[]");
-    const foundCoach = coaches.find((c: any) => c.id === coachId);
-    setCoach(foundCoach);
+  useEffect(() => { fetchStudents(); }, []);
 
-    // Load all students and filter by matching sports
-    const allStudents = JSON.parse(localStorage.getItem("students") || "[]");
-    
-    if (foundCoach) {
-      // Find students whose interests overlap with coach's expertise
-      const matched = allStudents.filter((student: Student) =>
-        student.interests.some((interest) => foundCoach.expertise.includes(interest))
-      );
-      setMyStudents(matched);
-    }
-  }, [coachId]);
+  const fetchStudents = async () => {
+    setLoading(true);
+    try { const data = await getStudents(); setStudents(data); } catch (err) { console.error(err); }
+    setLoading(false);
+  };
 
-  const handleContact = (student: Student) => {
-    alert(`You can now contact ${student.name} at ${student.email}`);
+  const handleLogout = async () => { await signOut(auth); navigate('/'); };
+  const toggleSport = (sport: string) => { setSelectedSports(prev => prev.includes(sport) ? prev.filter(s => s !== sport) : [...prev, sport]); };
+
+  const filteredStudents = students.filter(student => {
+    if (selectedSports.length > 0 && !student.interests.some(s => selectedSports.includes(s))) return false;
+    if (selectedLevel && student.level !== selectedLevel) return false;
+    if (maxBudget && parseFloat(student.budget || '0') < parseFloat(maxBudget)) return false;
+    return true;
+  });
+
+  const handleViewProfile = (student: Student) => { setSelectedStudent(student); setIsProfileOpen(true); };
+  const handleContact = (student: Student) => { alert('Contact request sent to ' + student.name + '!'); setIsProfileOpen(false); };
+
+  const getLevelColor = (level: string) => {
+    if (level === 'beginner') return { background: '#E8F5E9', color: '#2E7D32' };
+    if (level === 'intermediate') return { background: '#FFF3E0', color: '#E65100' };
+    if (level === 'advanced') return { background: '#FCE4EC', color: '#C62828' };
+    return { background: '#F5F5F5', color: '#333' };
   };
 
   return (
-    <div className="min-h-screen p-4 relative overflow-hidden" style={{
-      background: 'linear-gradient(135deg, #FF6B7A 0%, #FFE680 100%)'
-    }}>
-      {/* Shell pattern background */}
-      <div className="absolute inset-0 opacity-5">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="shell-pattern" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
-              <g transform="translate(60, 60)">
-                <path d="M 0,-30 Q 20,-25 25,-10 Q 28,0 25,10 Q 20,25 0,30 Q -20,25 -25,10 Q -28,0 -25,-10 Q -20,-25 0,-30 Z" 
-                      fill="white" opacity="0.6"/>
-                <path d="M 0,-25 L 0,25 M -15,-15 L 15,15 M 15,-15 L -15,15 M -20,0 L 20,0" 
-                      stroke="white" strokeWidth="1.5" opacity="0.4"/>
-                <circle cx="0" cy="0" r="5" fill="white" opacity="0.8"/>
-              </g>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#shell-pattern)"/>
-        </svg>
+    <div className='min-h-screen' style={{ background: 'linear-gradient(135deg, #E21833 0%, #FF6B35 50%, #FFD200 100%)' }}>
+      <div className='px-6 py-4 flex items-center justify-between sticky top-0 z-20' style={{ background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)' }}>
+        <div>
+          <h1 className='text-2xl font-black text-white' style={{ fontFamily: 'Apple Chancery, cursive' }}>Coach Connect</h1>
+          <p className='text-white/70 text-sm'>Welcome, {coachName}</p>
+        </div>
+        <p className='text-white/80 text-sm font-medium'>{loading ? 'Loading...' : filteredStudents.length + ' students found'}</p>
+        <Button variant='outline' onClick={handleLogout} className='border-white/30 text-white hover:bg-white/20' style={{ cursor: 'pointer' }}>
+          <LogOut className='w-4 h-4 mr-2' />Logout
+        </Button>
       </div>
 
-      <div className="max-w-6xl mx-auto space-y-6 relative z-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white drop-shadow-lg">My Students</h1>
-            {coach && (
-              <p className="text-white/90 mt-1 drop-shadow">
-                Students interested in: {coach.expertise.join(", ")}
-              </p>
+      <div className='flex max-w-7xl mx-auto px-4 py-6 gap-6'>
+        <div className='w-56 flex-shrink-0'>
+          <div className='rounded-2xl p-5 sticky top-20 space-y-5' style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <div className='flex items-center gap-2'>
+              <SlidersHorizontal className='w-4 h-4 text-white' />
+              <h2 className='font-bold text-white'>Filter Students</h2>
+            </div>
+            <div>
+              <p className='text-xs font-bold text-white/60 uppercase tracking-wider mb-3'>Sports</p>
+              <div className='space-y-2'>
+                {SPORTS.map(sport => (
+                  <label key={sport} className='flex items-center gap-2 cursor-pointer'>
+                    <div onClick={() => toggleSport(sport)} className='w-4 h-4 rounded border-2 flex items-center justify-center transition-all'
+                      style={{ background: selectedSports.includes(sport) ? '#FFD200' : 'transparent', borderColor: selectedSports.includes(sport) ? '#FFD200' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
+                      {selectedSports.includes(sport) && <span className='text-black text-xs font-bold'>v</span>}
+                    </div>
+                    <span className='text-sm text-white/90'>{sport}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className='text-xs font-bold text-white/60 uppercase tracking-wider mb-3'>Level</p>
+              <div className='space-y-2'>
+                {LEVELS.map(level => (
+                  <label key={level} className='flex items-center gap-2 cursor-pointer'>
+                    <div onClick={() => setSelectedLevel(selectedLevel === level ? '' : level)} className='w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all'
+                      style={{ background: selectedLevel === level ? '#FFD200' : 'transparent', borderColor: selectedLevel === level ? '#FFD200' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
+                      {selectedLevel === level && <div className='w-2 h-2 rounded-full bg-black'></div>}
+                    </div>
+                    <span className='text-sm text-white/90 capitalize'>{level}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className='text-xs font-bold text-white/60 uppercase tracking-wider mb-2'>Min Budget ($/hr)</p>
+              <input type='number' placeholder='Any budget' value={maxBudget} onChange={e => setMaxBudget(e.target.value)}
+                className='w-full rounded-lg px-3 py-2 text-sm focus:outline-none'
+                style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: 'white' }} />
+            </div>
+            {(selectedSports.length > 0 || selectedLevel || maxBudget) && (
+              <button onClick={() => { setSelectedSports([]); setSelectedLevel(''); setMaxBudget(''); }}
+                className='w-full text-sm text-yellow-300 font-semibold' style={{ cursor: 'pointer', background: 'none', border: 'none' }}>
+                Clear all filters
+              </button>
             )}
           </div>
-          <Button variant="destructive" onClick={() => navigate("/")} className="bg-red-600 hover:bg-red-700" style={{ cursor: 'pointer' }}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
         </div>
 
-        {myStudents.length === 0 ? (
-          <Alert className="bg-white/90">
-            <Users className="h-4 w-4" />
-            <AlertTitle>No Students Yet</AlertTitle>
-            <AlertDescription>
-              No students have signed up for your sports yet. Check back later as more students join the platform!
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-sm text-white/90 drop-shadow">
-              {myStudents.length} {myStudents.length === 1 ? "student" : "students"} interested in your coaching
-            </p>
-            
-            <div className="grid gap-4 md:grid-cols-2">
-              {myStudents.map((student) => (
-                <Card key={student.id} className="hover:shadow-lg transition-shadow bg-white/95">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle>{student.name}</CardTitle>
-                        <p className="text-sm text-gray-600 mt-1 capitalize">
-                          {student.level} Level
-                        </p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <p className="text-sm font-medium mb-1">Athletic Goals:</p>
-                      <p className="text-sm text-gray-600 line-clamp-3">{student.goals}</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      {student.email && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Mail className="w-4 h-4" />
-                          <span>{student.email}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-medium mb-2">Interested Sports:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {student.interests.map((interest) => {
-                          const isMatch = coach?.expertise.includes(interest);
-                          return (
-                            <Badge 
-                              key={interest} 
-                              variant={isMatch ? "default" : "secondary"}
-                            >
-                              {interest}
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {student.preferredTimes.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium mb-2">Preferred Times:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {student.preferredTimes.map((time) => (
-                            <Badge key={time} variant="outline">
-                              {time}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <Button className="w-full" style={{ cursor: 'pointer' }} onClick={() => handleContact(student)}>
-                      Contact Student
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+          {selectedStudent && (
+            <div className='space-y-5'>
+              <DialogHeader>
+                <div className='flex gap-4'>
+                  <div className='w-20 h-20 flex-shrink-0 rounded-full flex items-center justify-center text-white text-3xl font-black'
+                    style={{ background: 'linear-gradient(135deg, #E21833, #FFD200)' }}>
+                    {selectedStudent.name.charAt(0)}
+                  </div>
+                  <div className='flex-1'>
+                    <DialogTitle className='text-2xl font-bold'>{selectedStudent.name}</DialogTitle>
+                    <DialogDescription className='sr-only'>Profile for {selectedStudent.name}</DialogDescription>
+                    <p className='text-gray-500 text-sm mt-1'>Class of {selectedStudent.graduation_year || 'N/A'}</p>
+                    <span className='px-2 py-0.5 rounded-full text-xs font-semibold capitalize mt-2 inline-block' style={getLevelColor(selectedStudent.level)}>
+                      {selectedStudent.level || 'beginner'}
+                    </span>
+                  </div>
+                  <div className='text-right'>
+                    <p className='text-3xl font-black'></p>
+                    <p className='text-sm text-gray-500'>budget/hr</p>
+                  </div>
+                </div>
+              </DialogHeader>
+              <div>
+                <h3 className='font-bold text-gray-800 mb-1'>Athletic Goals</h3>
+                <p className='text-gray-600 text-sm italic'>'{selectedStudent.goals || 'No goals specified'}'</p>
+              </div>
+              <div>
+                <h3 className='font-bold text-gray-800 mb-2'>Interested Sports</h3>
+                <div className='flex flex-wrap gap-2'>
+                  {selectedStudent.interests.map(interest => (
+                    <span key={interest} className='px-3 py-1 rounded-full text-sm font-semibold' style={{ background: '#FFF3F4', color: '#E21833' }}>{interest}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h3 className='font-bold text-gray-800 mb-2'>Preferred Times</h3>
+                <div className='flex flex-wrap gap-2'>
+                  {(selectedStudent.preferred_times || []).map((time, idx) => (
+                    <span key={idx} className='px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700'>{time}</span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h3 className='font-bold text-gray-800 mb-2'>Contact</h3>
+                <div className='space-y-1.5'>
+                  <div className='flex items-center gap-2 text-sm'><Mail className='w-4 h-4 text-gray-400' /><span>{selectedStudent.email}</span></div>
+                  {selectedStudent.phone && <div className='flex items-center gap-2 text-sm'><Phone className='w-4 h-4 text-gray-400' /><span>{selectedStudent.phone}</span></div>}
+                </div>
+              </div>
+              <div className='flex gap-3 pt-2'>
+                <Button className='flex-1 py-5 text-base font-semibold rounded-xl' style={{ background: '#E21833', color: 'white', cursor: 'pointer' }} onClick={() => handleContact(selectedStudent)}>
+                  Contact Student
+                </Button>
+                <Button variant='outline' className='rounded-xl' style={{ cursor: 'pointer' }} onClick={() => setIsProfileOpen(false)}>Close</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

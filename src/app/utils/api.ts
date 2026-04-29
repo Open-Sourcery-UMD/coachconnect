@@ -71,3 +71,18 @@ export async function getCoaches(filters?: any) {
   const response = await fetch(url)
   return response.json()
 }
+
+export async function getUserProfile(firebaseUid: string) {
+  try {
+    const response = await fetch(API_URL + '/users/' + firebaseUid)
+    if (response.status === 404) return null
+    return await response.json()
+  } catch (err) {
+    return null
+  }
+}
+
+export async function getStudents() {
+  const response = await fetch(API_URL + '/users/students')
+  return response.json()
+}

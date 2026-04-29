@@ -252,7 +252,7 @@ export default function StudentOnboarding() {
       
       // Navigate to results page with sport interests
       try { await saveStudentToDB(formData); } catch(e) { console.error(e); }
-        navigate("/results", { state: { sports: formData.interests } });
+        navigate("/");
     }
   };
 

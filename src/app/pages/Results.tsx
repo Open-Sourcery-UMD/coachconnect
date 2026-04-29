@@ -42,8 +42,8 @@ export default function Results() {
 
   const filteredCoaches = coaches.filter(coach => {
     if (selectedSports.length > 0 && !coach.expertise.some(s => selectedSports.includes(s))) return false;
-    if (selectedLevel && !(coach.competition_level || []).includes(selectedLevel)) return false;
-    if (maxRate && parseFloat(coach.rate || '0') > parseFloat(maxRate)) return false;
+    if (selectedLevel && !(coach.competition_level || []).some((l: string) => l.toLowerCase() === selectedLevel.toLowerCase())) return false;
+    if (maxRate !== '' && maxRate !== '' && Number(coach.rate || 0) > Number(maxRate)) return false;
     return true;
   });
 
@@ -69,7 +69,7 @@ export default function Results() {
 
       <div className='flex max-w-7xl mx-auto px-4 py-6 gap-6'>
         <div className='w-56 flex-shrink-0'>
-          <div className='rounded-2xl p-5 sticky top-20 space-y-5' style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+          <div className='rounded-2xl p-5 sticky top-20 space-y-5' style={{ background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.4)' }}>
             <div className='flex items-center gap-2'>
               <SlidersHorizontal className='w-4 h-4 text-gray-600' />
               <h2 className='font-bold text-white'>Filters</h2>
@@ -80,8 +80,8 @@ export default function Results() {
                 {SPORTS.map(sport => (
                   <label key={sport} className='flex items-center gap-2 cursor-pointer'>
                     <div onClick={() => toggleSport(sport)} className='w-4 h-4 rounded border-2 flex items-center justify-center transition-all'
-                      style={{ background: selectedSports.includes(sport) ? '#E21833' : 'white', borderColor: selectedSports.includes(sport) ? '#E21833' : '#ddd', cursor: 'pointer' }}>
-                      {selectedSports.includes(sport) && <span className='text-white text-xs font-bold'>v</span>}
+                      style={{ background: selectedSports.includes(sport) ? '#FFD200' : 'transparent', borderColor: selectedSports.includes(sport) ? '#FFD200' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
+                      
                     </div>
                     <span className='text-sm text-white/90'>{sport}</span>
                   </label>
@@ -104,12 +104,12 @@ export default function Results() {
             </div>
             <div>
               <p className='text-xs font-bold text-white/60 uppercase tracking-wider mb-2'>Max Pricing ($/hr)</p>
-              <input type='number' placeholder='Any rate' value={maxRate} onChange={e => setMaxRate(e.target.value)}
+              <input type='number' placeholder='Any rate' value={maxRate} onChange={e => { const val = e.target.value; if (val === '' || parseFloat(val) >= 0) setMaxRate(val); }}
                 className='w-full rounded-lg px-3 py-2 text-sm focus:outline-none' style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: 'white' }} />
             </div>
             {(selectedSports.length > 0 || selectedLevel || maxRate) && (
               <button onClick={() => { setSelectedSports([]); setSelectedLevel(''); setMaxRate(''); }}
-                className='w-full text-sm text-red-500 hover:text-red-700 font-semibold' style={{ cursor: 'pointer', background: 'none', border: 'none' }}>
+                className='w-full text-sm font-bold py-2 rounded-lg' style={{ background: '#E21833', color: 'white', cursor: 'pointer', border: 'none' }}>
                 Clear all filters
               </button>
             )}
@@ -130,7 +130,7 @@ export default function Results() {
           ) : (
             <div className='grid gap-5 grid-cols-1 lg:grid-cols-2'>
               {filteredCoaches.map((coach) => (
-                <div key={coach.id} className='bg-white rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-100'>
+                <div key={coach.id} className='rounded-2xl shadow-md hover:shadow-xl transition-all overflow-hidden' style={{ background: 'rgba(255,255,255,0.92)', border: '2px solid rgba(255,255,255,0.6)' }}>
                   <div className='p-5'>
                     <div className='flex gap-4 mb-3'>
                       <div className='w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center text-white text-2xl font-black'
@@ -147,8 +147,8 @@ export default function Results() {
                         <p className='text-xs text-gray-500 mt-0.5'>College Park, MD</p>
                       </div>
                       <div className='text-right flex-shrink-0'>
-                        <p className='text-xl font-black text-gray-900'></p>
-                        <p className='text-xs text-gray-500'>/hour</p>
+                        <p className='text-xs text-gray-400'>from</p>
+                        <p className='text-xl font-black text-gray-900'>${coach.rate || '0'}<span className="text-xs font-normal text-gray-400">/hr</span></p>
                       </div>
                     </div>
                     <p className='text-sm text-gray-600 mb-3 line-clamp-2'>{coach.coaching_style || 'Passionate coach dedicated to helping students.'}</p>
@@ -192,8 +192,8 @@ export default function Results() {
                     </div>
                   </div>
                   <div className='text-right'>
-                    <p className='text-3xl font-black'></p>
-                    <p className='text-sm text-gray-500'>/hour</p>
+                    <p className='text-xs text-gray-400 mb-1'>pricing</p>
+                    <p className='text-2xl font-black' style={{ color: "#E21833" }}>${selectedCoach.rate || "0"}<span className='text-sm font-normal text-gray-500'>/hr</span></p>
                   </div>
                 </div>
               </DialogHeader>

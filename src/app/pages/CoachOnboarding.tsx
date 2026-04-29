@@ -45,7 +45,6 @@ export default function CoachOnboarding() {
     name: "",
     email: "",
     password: "",
-    password: "",
     phone: "",
     gender: "",
     customGender: "",
@@ -617,10 +616,11 @@ export default function CoachOnboarding() {
           },
         );
 
-        // Navigate to coach's student view
-        navigate("/my-students", {
-          state: { coachId: newCoach.id },
-        });
+        // Save to backend
+          try { await saveCoachToDB(formData); } catch(e) { console.error('Coach save error:', e); }
+
+          // Navigate to coach's student view
+        navigate("/");
       } catch (error) {
         // Handle QuotaExceededError by clearing old data and retrying
         if (
@@ -680,9 +680,7 @@ export default function CoachOnboarding() {
               },
             );
 
-            navigate("/my-students", {
-              state: { coachId: newCoach.id },
-            });
+            navigate("/");
           } catch (retryError) {
             console.error(
               "Failed to save coach data after clearing storage:",
