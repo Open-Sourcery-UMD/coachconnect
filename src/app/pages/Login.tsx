@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Footer from '../components/Footer';
 import { useNavigate } from 'react-router'
 import { Eye, EyeOff } from 'lucide-react'
 import { auth, googleProvider } from '../firebase'
@@ -78,7 +79,8 @@ export default function Login() {
   }
 
   return (
-    <div className='min-h-screen flex items-center justify-center p-4'>
+    <div className='min-h-screen flex flex-col justify-between'>
+      <div className='flex-1 flex items-center justify-center p-4'>
       <div
         className='w-full max-w-md p-8 rounded-3xl space-y-6'
         style={{
@@ -224,8 +226,8 @@ export default function Login() {
           </button>
         </p>
       </div>
+      </div>
+      <Footer />
     </div>
-  )
+  );
 }
-
-

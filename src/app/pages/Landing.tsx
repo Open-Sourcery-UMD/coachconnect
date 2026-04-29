@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router";
+import Footer from "../components/Footer";
 import { auth } from "../firebase";
 import { getUserProfile } from "../utils/api";
 import { useEffect } from "react";
@@ -16,6 +17,7 @@ export default function Landing() {
   }, []);
 
   return (
+    <>
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
       {/* Shell pattern background */}
       <div className="absolute inset-0 opacity-5">
@@ -180,28 +182,6 @@ export default function Landing() {
           </div>
         </div>
 
-        <div className="pt-6 flex items-center justify-center gap-8">
-          <div
-            onClick={() => navigate("/about")}
-            className="inline-block px-6 py-3 rounded-3xl bg-gray-200/80 shadow-sm transition-all duration-300 hover:bg-gray-300/90 hover:shadow-md cursor-pointer"
-          >
-            <p className="text-black/90 drop-shadow text-xl font-semibold">
-              Learn More About Coach Connect
-            </p>
-          </div>
-
-          <div
-            onClick={() => navigate("/")}
-            className="inline-block px-6 py-3 rounded-3xl bg-gray-200/80 shadow-sm transition-all duration-300 hover:bg-gray-300/90 hover:shadow-md cursor-pointer"
-          >
-            <p className="text-black/90 drop-shadow text-xl">
-              Already have an account?{" "}
-              <span className="font-semibold text-xl">
-                Login
-              </span>
-            </p>
-          </div>
-        </div>
       </div>
 
       <style>{`
@@ -214,5 +194,7 @@ export default function Landing() {
         }
       `}</style>
     </div>
+    <Footer />
+    </>
   );
 }

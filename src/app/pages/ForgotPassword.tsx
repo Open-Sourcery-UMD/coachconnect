@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Footer from '../components/Footer';
 import { useNavigate } from 'react-router'
 
 export default function ForgotPassword() {
@@ -93,6 +94,7 @@ export default function ForgotPassword() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

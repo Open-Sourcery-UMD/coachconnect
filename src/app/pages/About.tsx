@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router";
+import Footer from '../components/Footer';
 import { Button } from "../components/ui/button";
 import { ArrowLeft, Users, Target, Heart, HelpCircle } from "lucide-react";
 import { useState } from "react";
@@ -43,6 +44,7 @@ export default function About() {
   ];
 
   return (
+    <>
     <div className="min-h-screen p-4 py-8" style={{ fontFamily: 'Apple Chancery, cursive' }}>
       <div className="max-w-5xl mx-auto space-y-12">
         {/* Header */}
@@ -207,5 +209,7 @@ export default function About() {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 }

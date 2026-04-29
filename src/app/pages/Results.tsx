@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import Footer from '../components/Footer';
 import { useLocation, useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
@@ -233,6 +234,7 @@ export default function Results() {
           )}
         </DialogContent>
       </Dialog>
+      <Footer />
     </div>
   );
 }

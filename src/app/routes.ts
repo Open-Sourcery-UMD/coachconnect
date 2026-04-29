@@ -7,6 +7,9 @@ import StudentOnboarding from './pages/StudentOnboarding'
 import Results from './pages/Results'
 import MyStudents from './pages/MyStudents'
 import About from './pages/About'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
+import Contact from './pages/Contact'
 
 export const router = createBrowserRouter([
   { path: '/', Component: Login },
@@ -18,4 +21,7 @@ export const router = createBrowserRouter([
   { path: '/results', Component: Results },
   { path: '/my-students', Component: MyStudents },
   { path: '/about', Component: About },
+  { path: '/terms', Component: Terms },
+  { path: '/privacy', Component: Privacy },
+  { path: '/contact', Component: Contact },
 ])
