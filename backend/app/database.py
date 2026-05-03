@@ -3,6 +3,7 @@ from beanie import init_beanie
 from app.models.user import User
 from app.models.connection import Connection
 from app.models.appointment import Appointment
+from app.models.message import Message
 import os
 from dotenv import load_dotenv
 
@@ -12,5 +13,5 @@ async def init_db():
     client = AsyncIOMotorClient(os.getenv("MONGODB_URL"))
     await init_beanie(
         database=client[os.getenv("DB_NAME")],
-        document_models=[User, Connection, Appointment]
+        document_models=[User, Connection, Appointment, Message]
     )

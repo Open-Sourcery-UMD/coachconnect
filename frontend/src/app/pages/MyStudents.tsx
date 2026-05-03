@@ -7,6 +7,7 @@ import { LogOut, Users, Calendar, MessageCircle, Clock, CheckCircle, XCircle } f
 import { getStudents, getCoachConnections, getCoachAppointments, acceptAppointment, declineAppointment } from '../utils/api';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
+import WeeklyCalendar from '../components/WeeklyCalendar';
 
 interface Student {
   id: string; auth0_id: string; name: string; email: string; phone: string;
@@ -20,46 +21,6 @@ interface Appointment {
   slot: string; status: 'pending' | 'accepted' | 'declined';
 }
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-function WeeklyCalendar({ appointments }: { appointments: Appointment[] }) {
-  const getWeekDates = () => {
-    const today = new Date();
-    const dow = today.getDay();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
-    return DAYS.map((_, i) => { const d = new Date(monday); d.setDate(monday.getDate() + i); return d; });
-  };
-  const weekDates = getWeekDates();
-  const accepted = appointments.filter(a => a.status === 'accepted');
-
-  return (
-    <div className='grid grid-cols-7 gap-1.5'>
-      {DAYS.map((day, i) => {
-        const date = weekDates[i];
-        const isToday = date.toDateString() === new Date().toDateString();
-        const dayAppts = accepted.filter(a => a.slot.startsWith(day));
-        return (
-          <div key={day} className='min-h-28 rounded-xl p-2 flex flex-col'
-            style={{ background: isToday ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)', border: isToday ? '2px solid white' : '1px solid rgba(255,255,255,0.2)' }}>
-            <div className='text-center mb-2'>
-              <p className='text-xs font-bold text-white/70'>{day.slice(0, 3).toUpperCase()}</p>
-              <p className={`text-base font-black ${isToday ? 'text-white' : 'text-white/80'}`}>{date.getDate()}</p>
-            </div>
-            <div className='space-y-1 flex-1'>
-              {dayAppts.map(appt => (
-                <div key={appt.id} className='rounded-lg p-1.5 text-xs' style={{ background: '#E21833', color: 'white' }}>
-                  <p className='font-bold truncate'>{appt.student_name}</p>
-                  <p className='text-white/80 truncate'>{appt.slot.replace(day + ' ', '')}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function MyStudents() {
   const navigate = useNavigate();
@@ -350,8 +311,8 @@ export default function MyStudents() {
       )}
 
       {activeTab === 'calendar' && (
-        <div className='max-w-7xl mx-auto px-6 py-6 space-y-6'>
-          <h2 className='text-xl font-black text-white flex items-center gap-2'>
+        <div className='px-4 py-4 space-y-3 flex-1 flex flex-col'>
+          <h2 className='text-xl font-black text-white flex items-center gap-2 flex-shrink-0'>
             <Calendar className='w-5 h-5' />Weekly View — {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </h2>
           {appointmentsLoading ? (
@@ -363,7 +324,7 @@ export default function MyStudents() {
               <p className='text-white/70 text-sm mt-1'>Accept appointment requests to see them on your calendar.</p>
             </div>
           ) : (
-            <WeeklyCalendar appointments={appointments} />
+            <WeeklyCalendar appointments={appointments.map(a => ({ ...a, label: a.student_name }))} />
           )}
         </div>
       )}

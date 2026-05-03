@@ -133,3 +133,19 @@ export async function declineAppointment(id: string) {
   const response = await fetch(API_URL + '/appointments/' + id + '/decline', { method: 'PATCH' });
   return response.json();
 }
+
+export async function getConversationHistory(user1: string, user2: string) {
+  const response = await fetch(API_URL + '/messages/conversation/' + user1 + '/' + user2);
+  return response.json();
+}
+
+export async function getConversationList(userId: string) {
+  const response = await fetch(API_URL + '/messages/conversations/' + userId);
+  return response.json();
+}
+
+export async function markMessagesRead(senderId: string, receiverId: string) {
+  await fetch(API_URL + '/messages/read/' + senderId + '/' + receiverId, { method: 'PATCH' });
+}
+
+export const WS_URL = 'ws://localhost:8000';

@@ -8,6 +8,7 @@ import { LogOut, MessageCircle, Mail, Phone, Star, AlertCircle, Calendar, Slider
 import { getCoaches, getStudentConnections, createAppointment, getStudentAppointments } from '../utils/api';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
+import WeeklyCalendar from '../components/WeeklyCalendar';
 
 interface Coach {
   id: string; auth0_id: string; name: string; email: string; phone: string;
@@ -24,45 +25,6 @@ interface Appointment {
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const SPORTS = ['Soccer', 'Basketball', 'Tennis', 'Volleyball', 'Baseball', 'Softball', 'Swimming', 'Track', 'Football', 'Golf'];
 const LEVELS = ['Recreational', 'Competitive', 'Elite'];
-
-function WeeklyCalendar({ appointments }: { appointments: Appointment[] }) {
-  const getWeekDates = () => {
-    const today = new Date();
-    const dow = today.getDay();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
-    return DAYS.map((_, i) => { const d = new Date(monday); d.setDate(monday.getDate() + i); return d; });
-  };
-  const weekDates = getWeekDates();
-  const accepted = appointments.filter(a => a.status === 'accepted');
-
-  return (
-    <div className='grid grid-cols-7 gap-1.5'>
-      {DAYS.map((day, i) => {
-        const date = weekDates[i];
-        const isToday = date.toDateString() === new Date().toDateString();
-        const dayAppts = accepted.filter(a => a.slot.startsWith(day));
-        return (
-          <div key={day} className='min-h-28 rounded-xl p-2 flex flex-col'
-            style={{ background: isToday ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)', border: isToday ? '2px solid white' : '1px solid rgba(255,255,255,0.2)' }}>
-            <div className='text-center mb-2'>
-              <p className='text-xs font-bold text-white/70'>{day.slice(0, 3).toUpperCase()}</p>
-              <p className={`text-base font-black ${isToday ? 'text-white' : 'text-white/80'}`}>{date.getDate()}</p>
-            </div>
-            <div className='space-y-1 flex-1'>
-              {dayAppts.map(appt => (
-                <div key={appt.id} className='rounded-lg p-1.5 text-xs' style={{ background: '#E21833', color: 'white' }}>
-                  <p className='font-bold truncate'>{appt.coach_name}</p>
-                  <p className='text-white/80 truncate'>{appt.slot.replace(day + ' ', '')}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function Results() {
   const navigate = useNavigate();
@@ -185,7 +147,7 @@ export default function Results() {
 
   const getScheduleByDay = (availability: string[]) => {
     const schedule: Record<string, string[]> = {};
-    DAYS.forEach(day => { schedule[day] = availability.filter(slot => slot.startsWith(day)).map(slot => slot.replace(day + ' ', '')); });
+    DAYS.forEach((day: string) => { schedule[day] = availability.filter(slot => slot.startsWith(day)).map(slot => slot.replace(day + ' ', '')); });
     return schedule;
   };
 
@@ -328,13 +290,13 @@ export default function Results() {
           </div>
         </div>
       ) : (
-        <div className='max-w-7xl mx-auto px-6 py-6 space-y-8'>
+        <div className='px-4 py-4 space-y-6'>
           {appointmentsLoading ? (
             <div className='flex items-center justify-center h-48'><p className='text-white text-lg'>Loading...</p></div>
           ) : (
             <>
               <div>
-                <h2 className='text-xl font-black text-white mb-4 flex items-center gap-2'>
+                <h2 className='text-xl font-black text-white mb-3 flex items-center gap-2'>
                   <Calendar className='w-5 h-5' />Weekly View — {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </h2>
                 {acceptedAppointments.length === 0 ? (
@@ -344,7 +306,7 @@ export default function Results() {
                     <p className='text-white/70 text-sm'>Once a coach accepts your booking it will appear here.</p>
                   </div>
                 ) : (
-                  <WeeklyCalendar appointments={appointments} />
+                  <WeeklyCalendar appointments={appointments.map(a => ({ ...a, label: a.coach_name }))} />
                 )}
               </div>
 
