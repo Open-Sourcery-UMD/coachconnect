@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router';
 import { ArrowLeft, Send } from 'lucide-react';
 import { auth } from '../firebase';
@@ -20,6 +20,24 @@ export default function Conversation() {
   const currentUserId = auth.currentUser?.uid || '';
   const [isCoach, setIsCoach] = useState(false);
   const [accepted, setAccepted] = useState(false);
+    const wsRef = useRef<WebSocket | null>(null);
+  
+    useEffect(() => {
+      const websocket = new WebSocket("ws://localhost:8000/ws");
+      wsRef.current = websocket;
+  
+      websocket.onopen = () => console.log("Connected to WebSocket server");
+      websocket.onmessage = (event) => {
+        const incoming: Message = JSON.parse(event.data);
+        setMessages((prevMessages) => [...prevMessages, incoming]);
+      };
+      websocket.onclose = () => console.log("Disconnected from WebSocket server");
+  
+      // Cleanup on unmount
+      return () =>  {
+       if (websocket.readyState === WebSocket.OPEN) websocket.close();
+      }
+    }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -73,15 +91,26 @@ export default function Conversation() {
     localStorage.setItem('cc_messages', JSON.stringify(updated));
   };
 
-  const handleSend = () => {
-    if (!newMessage.trim()) return;
-    const msg: Message = { id: Date.now().toString(), senderId: currentUserId, receiverId: userId!, text: newMessage.trim(), timestamp: Date.now(), read: false };
-    const all = JSON.parse(localStorage.getItem('cc_messages') || '[]') as Message[];
-    all.push(msg);
-    localStorage.setItem('cc_messages', JSON.stringify(all));
-    setMessages([...messages, msg]);
-    setNewMessage('');
+const handleSend = () => {
+  if (!newMessage.trim()) return;
+  const msg: Message = { 
+    id: Date.now().toString(), senderId: currentUserId, 
+    receiverId: userId!, text: newMessage.trim(), 
+    timestamp: Date.now(), read: false 
   };
+  
+  // save locally
+  const all = JSON.parse(localStorage.getItem('cc_messages') || '[]') as Message[];
+  all.push(msg);
+  localStorage.setItem('cc_messages', JSON.stringify(all));
+  
+  // also send over WebSocket so the other person gets it
+  if (wsRef.current?.readyState === WebSocket.OPEN) {
+    wsRef.current.send(JSON.stringify(msg)); // ← add this
+  }
+
+  setNewMessage('');
+}
 
   const formatTime = (ts: number) => new Date(ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 

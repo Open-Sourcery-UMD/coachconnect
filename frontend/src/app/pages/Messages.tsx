@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Search, MessageCircle } from 'lucide-react';
 import { auth } from '../firebase';

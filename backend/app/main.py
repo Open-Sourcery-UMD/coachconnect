@@ -1,8 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.database import init_db
 from app.routers import users, connections
+from fastapi.responses import HTMLResponse
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,4 +28,11 @@ app.include_router(connections.router, prefix='/connections', tags=['Connections
 def root():
     return {'message': 'Coach Connect API is running'}
 
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text(data)
+        print(data)
 
