@@ -66,9 +66,8 @@ export async function saveStudentToDB(formData: any) {
   return data
 }
 
-export async function getCoaches(filters?: any) {
-  let url = API_URL + '/users/coaches'
-  const response = await fetch(url)
+export async function getCoaches() {
+  const response = await fetch(API_URL + '/users/coaches')
   return response.json()
 }
 
@@ -105,3 +104,48 @@ export async function getStudentConnections(studentId: string) {
   const response = await fetch(API_URL + '/connections/student/' + studentId);
   return response.json();
 }
+
+export async function createAppointment(data: object) {
+  const response = await fetch(API_URL + '/appointments/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return response.json();
+}
+
+export async function getCoachAppointments(coachId: string) {
+  const response = await fetch(API_URL + '/appointments/coach/' + coachId);
+  return response.json();
+}
+
+export async function getStudentAppointments(studentId: string) {
+  const response = await fetch(API_URL + '/appointments/student/' + studentId);
+  return response.json();
+}
+
+export async function acceptAppointment(id: string) {
+  const response = await fetch(API_URL + '/appointments/' + id + '/accept', { method: 'PATCH' });
+  return response.json();
+}
+
+export async function declineAppointment(id: string) {
+  const response = await fetch(API_URL + '/appointments/' + id + '/decline', { method: 'PATCH' });
+  return response.json();
+}
+
+export async function getConversationHistory(user1: string, user2: string) {
+  const response = await fetch(API_URL + '/messages/conversation/' + user1 + '/' + user2);
+  return response.json();
+}
+
+export async function getConversationList(userId: string) {
+  const response = await fetch(API_URL + '/messages/conversations/' + userId);
+  return response.json();
+}
+
+export async function markMessagesRead(senderId: string, receiverId: string) {
+  await fetch(API_URL + '/messages/read/' + senderId + '/' + receiverId, { method: 'PATCH' });
+}
+
+export const WS_URL = 'ws://localhost:8000';

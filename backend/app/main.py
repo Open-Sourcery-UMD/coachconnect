@@ -2,9 +2,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.database import init_db
-from app.routers import users, connections
-from fastapi.responses import HTMLResponse
-
+from app.routers import users, connections, appointments, messages
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,6 +21,8 @@ app.add_middleware(
 
 app.include_router(users.router, prefix='/users', tags=['Users'])
 app.include_router(connections.router, prefix='/connections', tags=['Connections'])
+app.include_router(appointments.router, prefix='/appointments', tags=['Appointments'])
+app.include_router(messages.router, prefix='/messages', tags=['Messages'])
 
 @app.get('/')
 def root():

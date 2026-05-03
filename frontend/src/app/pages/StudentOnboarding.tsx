@@ -102,6 +102,8 @@ export default function StudentOnboarding() {
   const timeSlots = generateTimeSlots();
 
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const toggleDay = (day: string) => {
     setExpandedDay(expandedDay === day ? null : day);
@@ -247,11 +249,28 @@ export default function StudentOnboarding() {
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
+      setSubmitError('');
+      setSubmitting(true);
       try {
         await createUserWithEmailAndPassword(auth, formData.email, formData.password);
         await saveStudentToDB(formData);
         navigate("/results");
-      } catch(e) { console.error(e); }
+      } catch (e: any) {
+        console.error(e);
+        if (e.code === 'auth/email-already-in-use') {
+          setSubmitError('An account with this email already exists. Please log in instead.');
+        } else if (e.code === 'auth/weak-password') {
+          setSubmitError('Password is too weak. Please choose a stronger password.');
+        } else if (e.code === 'auth/network-request-failed') {
+          setSubmitError('Network error. Please check your connection and try again.');
+        } else if (e.message?.includes('Failed to fetch') || e.message?.includes('fetch')) {
+          setSubmitError('Could not reach the server. Make sure the backend is running.');
+        } else {
+          setSubmitError(e.message || 'Something went wrong. Please try again.');
+        }
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
@@ -598,6 +617,11 @@ export default function StudentOnboarding() {
                     <p className="text-sm text-gray-500">{formData.preferredTimes.length} time slots selected</p>
                   </div>
                 </div>
+                {submitError && (
+                  <div className="bg-red-50 border border-red-300 rounded-lg px-4 py-3">
+                    <p className="text-red-600 text-sm font-medium">{submitError}</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -606,9 +630,9 @@ export default function StudentOnboarding() {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              <Button onClick={handleNext} style={{ cursor: 'pointer' }}>
-                {step === totalSteps ? "Find Coaches" : "Continue"}
-                {step < totalSteps && <ArrowRight className="w-4 h-4 ml-2" />}
+              <Button onClick={handleNext} disabled={submitting} style={{ cursor: submitting ? 'not-allowed' : 'pointer' }}>
+                {submitting ? 'Creating account...' : step === totalSteps ? 'Find Coaches' : 'Continue'}
+                {step < totalSteps && !submitting && <ArrowRight className="w-4 h-4 ml-2" />}
               </Button>
             </div>
           </CardContent>
