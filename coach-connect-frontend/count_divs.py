@@ -1,6 +1,0 @@
-content = open("src/app/pages/MyStudents.tsx", "r", encoding="utf-8").read()
-opens = content.count("<div")
-closes = content.count("</div>")
-print("Opening divs:", opens)
-print("Closing divs:", closes)
-print("Difference:", opens - closes)
