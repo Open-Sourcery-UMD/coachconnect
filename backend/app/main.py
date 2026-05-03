@@ -25,3 +25,5 @@ app.include_router(connections.router, prefix='/connections', tags=['Connections
 @app.get('/')
 def root():
     return {'message': 'Coach Connect API is running'}
+
+
