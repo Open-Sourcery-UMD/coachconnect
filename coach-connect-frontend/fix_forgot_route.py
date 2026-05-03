@@ -1,0 +1,5 @@
+content = open("src/app/routes.ts", "r", encoding="utf-8").read()
+content = content.replace("import ForgotPassword from './pages/ForgotPassword'\n", "")
+content = content.replace("  { path: '/forgot-password', Component: ForgotPassword },\n", "")
+open("src/app/routes.ts", "w", encoding="utf-8").write(content)
+print("Done!")

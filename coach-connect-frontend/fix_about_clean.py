@@ -1,0 +1,6 @@
+content = open("src/app/pages/About.tsx", "r", encoding="utf-8").read()
+content = content.replace("import Footer from '../components/Footer';\n", "")
+content = content.replace("      <Footer />\n", "")
+content = content.replace("    <Footer />\n", "")
+open("src/app/pages/About.tsx", "w", encoding="utf-8").write(content)
+print("Done!")
