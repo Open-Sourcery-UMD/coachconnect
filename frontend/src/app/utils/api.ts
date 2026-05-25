@@ -15,7 +15,7 @@ export async function saveCoachToDB(formData: any) {
       'Authorization': 'Bearer ' + token
     },
     body: JSON.stringify({
-      auth0_id: user.uid,
+      firebase_uid: user.uid,
       email: user.email || formData.email,
       name: formData.name,
       phone: formData.phone,
@@ -47,7 +47,7 @@ export async function saveStudentToDB(formData: any) {
       'Authorization': 'Bearer ' + token
     },
     body: JSON.stringify({
-      auth0_id: user.uid,
+      firebase_uid: user.uid,
       email: user.email || formData.email,
       name: formData.name,
       phone: formData.phone,

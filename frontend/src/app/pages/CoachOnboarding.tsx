@@ -683,7 +683,7 @@ export default function CoachOnboarding() {
               },
             );
 
-            navigate("/");
+            navigate("/my-students");
           } catch (retryError) {
             console.error(
               "Failed to save coach data after clearing storage:",

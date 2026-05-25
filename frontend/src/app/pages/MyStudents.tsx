@@ -10,7 +10,7 @@ import { signOut } from 'firebase/auth';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 
 interface Student {
-  id: string; auth0_id: string; name: string; email: string; phone: string;
+  id: string; firebase_uid: string; name: string; email: string; phone: string;
   interests: string[]; goals: string; level: string; budget: string;
   preferred_times: string[]; graduation_year: string; role: string;
 }
@@ -30,6 +30,7 @@ export default function MyStudents() {
   const [myStudents, setMyStudents] = useState<any[]>([]);
   const [userName, setUserName] = useState<string>('');
   const [coachSports, setCoachSports] = useState<string[]>([]);
+  const [showAllSports, setShowAllSports] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
 
@@ -99,7 +100,7 @@ export default function MyStudents() {
 
   const handleLogout = async () => { await signOut(auth); navigate('/'); };
   const sportMatchedStudents = coachSports.length === 0 ? students : students.filter(s => s.interests.some(i => coachSports.includes(i)));
-  const myConnectedStudents = students.filter(s => myStudents.some(c => c.student_id === s.auth0_id));
+  const myConnectedStudents = students.filter(s => myStudents.some(c => c.student_id === s.firebase_uid));
   const pendingAppointments = appointments.filter(a => a.status === 'pending');
   const acceptedAppointments = appointments.filter(a => a.status === 'accepted');
 
@@ -140,7 +141,7 @@ export default function MyStudents() {
             ))}
           </div>
           <Button className='w-full font-semibold rounded-xl text-sm' style={{ background: '#E21833', color: 'white', cursor: 'pointer' }}
-            onClick={() => { localStorage.setItem('cc_user_' + student.auth0_id, student.name); navigate('/conversation/' + student.auth0_id, { state: { userName: student.name } }); }}>
+            onClick={() => { localStorage.setItem('cc_user_' + student.firebase_uid, student.name); navigate('/conversation/' + student.firebase_uid, { state: { userName: student.name } }); }}>
             <MessageCircle className='w-4 h-4 mr-2' />Message
           </Button>
         </div>
@@ -154,6 +155,7 @@ export default function MyStudents() {
         <div>
           <h1 className='text-2xl font-black text-white' style={{ fontFamily: 'Apple Chancery, cursive' }}>Coach Connect</h1>
           <p className='text-white/70 text-sm'>Welcome Back{userName ? ', ' + userName : ''}</p>
+          {coachSports.length > 0 && (<div className='flex flex-wrap gap-1 mt-1'>{(showAllSports ? coachSports : [coachSports[0]]).map(s => (<span key={s} className='px-2 py-0.5 rounded-full text-xs font-semibold' style={{background:'rgba(255,255,255,0.25)',color:'white'}}>{s}</span>))}{coachSports.length > 1 && (<button onClick={() => setShowAllSports(p => !p)} style={{background:'rgba(255,255,255,0.15)',color:'white',border:'none',cursor:'pointer',borderRadius:'999px',padding:'2px 8px',fontSize:'12px',fontWeight:'600'}}>{showAllSports ? 'Show less ?' : '+' + (coachSports.length - 1) + ' more ?'}</button>)}</div>)}
         </div>
         <p className='text-white/80 text-sm font-medium'>
           {loading ? 'Loading...' : (activeTab === 'allStudents' ? sportMatchedStudents.length : activeTab === 'myStudents' ? myConnectedStudents.length : '') + (activeTab === 'allStudents' || activeTab === 'myStudents' ? ' students' : '')}
@@ -205,7 +207,7 @@ export default function MyStudents() {
           ) : (
             <div className='grid gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
               {sportMatchedStudents.map((student: Student) => {
-                const isConnected = myStudents.some(c => c.student_id === student.auth0_id);
+                const isConnected = myStudents.some(c => c.student_id === student.firebase_uid);
                 return renderStudentCard(student, isConnected);
               })}
             </div>

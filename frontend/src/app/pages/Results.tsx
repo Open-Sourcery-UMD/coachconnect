@@ -11,7 +11,7 @@ import { signOut } from 'firebase/auth';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 
 interface Coach {
-  id: string; auth0_id: string; name: string; email: string; phone: string;
+  id: string; firebase_uid: string; name: string; email: string; phone: string;
   expertise: string[]; coaching_style: string; rate: string;
   availability: string[]; role: string; gender?: string; competition_level?: string[];
 }
@@ -109,12 +109,12 @@ export default function Results() {
 
   const handleViewProfile = (coach: Coach) => { setSelectedCoach(coach); setIsProfileOpen(true); };
   const handleConnect = (coach: Coach) => {
-    localStorage.setItem('cc_user_' + coach.auth0_id, coach.name);
+    localStorage.setItem('cc_user_' + coach.firebase_uid, coach.name);
     if (auth.currentUser) {
       localStorage.setItem('cc_user_' + auth.currentUser.uid, auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Student');
     }
     setIsProfileOpen(false);
-    navigate('/conversation/' + coach.auth0_id, { state: { userName: coach.name } });
+    navigate('/conversation/' + coach.firebase_uid, { state: { userName: coach.name } });
   };
 
   const handleOpenBooking = (coach: Coach) => {
@@ -131,7 +131,7 @@ export default function Results() {
     if (!user || !bookingCoach) return;
     try {
       await createAppointment({
-        coach_id: bookingCoach.auth0_id,
+        coach_id: bookingCoach.firebase_uid,
         student_id: user.uid,
         coach_name: bookingCoach.name,
         student_name: userFullName || userName || user.email?.split('@')[0] || 'Student',
@@ -403,7 +403,7 @@ export default function Results() {
                 </div>
               </div>
               <div className='flex gap-3 pt-2'>
-                {myCoachIds.has(selectedCoach.auth0_id) ? (
+                {myCoachIds.has(selectedCoach.firebase_uid) ? (
                   <Button className='flex-1 py-5 text-base font-semibold rounded-xl' style={{ background: '#E21833', color: 'white', cursor: 'pointer' }} onClick={() => handleOpenBooking(selectedCoach)}>
                     <Calendar className='w-4 h-4 mr-2' />Book Session
                   </Button>

@@ -4,7 +4,6 @@ import Footer from '../components/Footer';
 export default function Privacy() {
   const navigate = useNavigate();
   return (
-    <>
     <div className='min-h-screen' style={{ background: 'linear-gradient(135deg, #E21833 0%, #FF6B35 50%, #FFD200 100%)' }}>
       <div className='px-6 py-4 flex items-center gap-6 sticky top-0 z-20' style={{ background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)' }}>
         <button onClick={() => navigate(-1)} className='flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-gray-800 hover:bg-gray-100 transition-all' style={{ background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer' }}><span style={{ fontSize: '18px' }}>&#8592;</span> Back</button>
@@ -35,8 +34,8 @@ export default function Privacy() {
           </div>
         </div>
       </div>
-    </div>
     <Footer />
-    </>
+    </div>
   );
 }
+

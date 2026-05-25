@@ -149,7 +149,7 @@ export default function WeeklyCalendar({ appointments }: Props) {
           const isToday = date.toDateString() === today.toDateString();
           const count = byDay[day].length;
           return (
-            <div key={day} className='flex-1 text-center py-2' style={{ minWidth: 0 }}>
+            <div key={day} className='flex-1 text-center py-2' >
               <p className='text-xs font-bold'
                 style={{ color: isToday ? '#FFD200' : 'rgba(255,255,255,0.5)' }}>
                 {day.slice(0, 3).toUpperCase()}
@@ -191,8 +191,8 @@ export default function WeeklyCalendar({ appointments }: Props) {
             const appts = byDay[day];
 
             return (
-              <div key={day} className='flex-1 relative' style={{ minWidth: 0 }}
-                style={{ borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
+              <div key={day} className='flex-1 relative' 
+                style={{ minWidth: 0, borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
 
                 {/* Today column tint */}
                 {isToday && (

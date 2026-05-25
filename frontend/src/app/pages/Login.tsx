@@ -45,12 +45,12 @@ export default function Login() {
       if (profile) {
         if (tab === 'student' && profile.role === 'coach') {
           await signOut(auth)
-          setAuthError('This account is registered as a coach. Please use the Coach Log In tab.')
+          setAuthError('Invalid email or password')
           return
         }
         if (tab === 'coach' && profile.role === 'student') {
           await signOut(auth)
-          setAuthError('This account is registered as a student. Please use the Student Log In tab.')
+          setAuthError('Invalid email or password')
           return
         }
         if (profile.role === 'coach') { navigate('/my-students') }
@@ -72,12 +72,12 @@ export default function Login() {
       if (profile) {
         if (tab === 'student' && profile.role === 'coach') {
           await signOut(auth)
-          setAuthError('This account is registered as a coach. Please use the Coach Log In tab.')
+          setAuthError('Invalid email or password')
           return
         }
         if (tab === 'coach' && profile.role === 'student') {
           await signOut(auth)
-          setAuthError('This account is registered as a student. Please use the Student Log In tab.')
+          setAuthError('Invalid email or password')
           return
         }
         if (profile.role === 'coach') { navigate('/my-students') }
@@ -246,3 +246,5 @@ export default function Login() {
     </div>
   );
 }
+
+

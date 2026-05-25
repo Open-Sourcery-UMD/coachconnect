@@ -118,7 +118,7 @@ export default function Conversation() {
   }
 
   setNewMessage('');
-}
+
 
   const formatTime = (ts: number) => new Date(ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
