@@ -163,8 +163,7 @@ export default function Results() {
   return (
     <div className='min-h-screen' style={{ background: 'linear-gradient(135deg, #E21833 0%, #FF6B35 50%, #FFD200 100%)' }}>
       <div className='px-6 py-4 flex items-center justify-between sticky top-0 z-20' style={{ background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)' }}>
-        <h1 className='text-2xl font-black text-white' style={{ fontFamily: 'Apple Chancery, cursive' }}>Coach Connect</h1>
-        <p className='text-white/70 text-sm'>Welcome Back{userName ? ', ' + userName : ''}</p>
+        <p className='text-white font-bold text-xl'>Welcome Back{userName ? ', ' + userName : ''}</p>
         <Button onClick={() => navigate('/messages')} className='mr-2' style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
           <MessageCircle className='w-4 h-4 mr-2' />Messages
         </Button>

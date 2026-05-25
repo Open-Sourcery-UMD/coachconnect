@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router';
+﻿import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, Send } from 'lucide-react';
 import { auth } from '../firebase';
 import { createConnection, getUserProfile, getConversationHistory, markMessagesRead, WS_URL } from '../utils/api';
@@ -107,15 +107,7 @@ export default function Conversation() {
     setNewMessage('');
   };
   
-  // save locally
-  const all = JSON.parse(localStorage.getItem('cc_messages') || '[]') as Message[];
-  all.push(msg);
-  localStorage.setItem('cc_messages', JSON.stringify(all));
   
-  // also send over WebSocket so the other person gets it
-  if (wsRef.current?.readyState === WebSocket.OPEN) {
-    wsRef.current.send(JSON.stringify(msg)); // ← add this
-  }
 
   setNewMessage('');
 
@@ -201,3 +193,5 @@ export default function Conversation() {
     </div>
   );
 }
+
+

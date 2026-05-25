@@ -31,6 +31,7 @@ export default function MyStudents() {
   const [userName, setUserName] = useState<string>('');
   const [coachSports, setCoachSports] = useState<string[]>([]);
   const [showAllSports, setShowAllSports] = useState(false);
+  const [selectedSport, setSelectedSport] = useState<string>('');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
 
@@ -99,7 +100,7 @@ export default function MyStudents() {
   };
 
   const handleLogout = async () => { await signOut(auth); navigate('/'); };
-  const sportMatchedStudents = coachSports.length === 0 ? students : students.filter(s => s.interests.some(i => coachSports.includes(i)));
+  const sportMatchedStudents = students.filter(s => { const sport = selectedSport || null; if (sport) return s.interests.includes(sport); return coachSports.length === 0 || s.interests.some(i => coachSports.includes(i)); });
   const myConnectedStudents = students.filter(s => myStudents.some(c => c.student_id === s.firebase_uid));
   const pendingAppointments = appointments.filter(a => a.status === 'pending');
   const acceptedAppointments = appointments.filter(a => a.status === 'accepted');
@@ -153,26 +154,23 @@ export default function MyStudents() {
     <div className='min-h-screen flex flex-col' style={{ background: 'linear-gradient(135deg, #E21833 0%, #FF6B35 50%, #FFD200 100%)' }}>
       <div className='px-6 py-4 flex items-center justify-between sticky top-0 z-20' style={{ background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)' }}>
         <div>
-          <h1 className='text-2xl font-black text-white' style={{ fontFamily: 'Apple Chancery, cursive' }}>Coach Connect</h1>
-          <p className='text-white/70 text-sm'>Welcome Back{userName ? ', ' + userName : ''}</p>
-          {coachSports.length > 0 && (<div className='flex flex-wrap gap-1 mt-1'>{(showAllSports ? coachSports : [coachSports[0]]).map(s => (<span key={s} className='px-2 py-0.5 rounded-full text-xs font-semibold' style={{background:'rgba(255,255,255,0.25)',color:'white'}}>{s}</span>))}{coachSports.length > 1 && (<button onClick={() => setShowAllSports(p => !p)} style={{background:'rgba(255,255,255,0.15)',color:'white',border:'none',cursor:'pointer',borderRadius:'999px',padding:'2px 8px',fontSize:'12px',fontWeight:'600'}}>{showAllSports ? 'Show less ?' : '+' + (coachSports.length - 1) + ' more ?'}</button>)}</div>)}
+          <p className='text-white font-bold text-xl'>Welcome Back{userName ? ', ' + userName : ''}</p>
         </div>
-        <p className='text-white/80 text-sm font-medium'>
-          {loading ? 'Loading...' : (activeTab === 'allStudents' ? sportMatchedStudents.length : activeTab === 'myStudents' ? myConnectedStudents.length : '') + (activeTab === 'allStudents' || activeTab === 'myStudents' ? ' students' : '')}
-        </p>
-        <Button onClick={() => navigate('/messages')} className='mr-2' style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
+        <div className='flex items-center gap-3'>
+        {coachSports.length > 0 && (<div style={{position:'relative',marginRight:'8px'}}><button onClick={() => setShowAllSports(p=>!p)} style={{background:'rgba(255,255,255,0.2)',color:'white',border:'1px solid rgba(255,255,255,0.3)',cursor:'pointer',borderRadius:'999px',padding:'6px 16px',fontSize:'13px',fontWeight:'700',display:'flex',alignItems:'center',gap:'6px'}}>{selectedSport || coachSports[0]}{coachSports.length > 1 && (showAllSports ? ' ?' : ' ?')}</button>{showAllSports && coachSports.length > 1 && (<div style={{position:'absolute',top:'110%',right:0,background:'rgba(20,20,20,0.95)',borderRadius:'12px',padding:'8px',zIndex:50,minWidth:'150px',boxShadow:'0 4px 20px rgba(0,0,0,0.4)'}}>{['All Sports',...coachSports].map(s=><div key={s} onClick={()=>{setSelectedSport(s==='All Sports'?'':s);setShowAllSports(false);}} style={{padding:'8px 12px',color: selectedSport===s||(!selectedSport&&s==='All Sports')?'#FFD200':'white',fontSize:'13px',fontWeight:'600',cursor:'pointer',borderRadius:'8px'}}>{s}</div>)}</div>)}</div>)}<Button onClick={() => navigate('/messages')} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
           <MessageCircle className='w-4 h-4 mr-2' />Messages
         </Button>
         <Button onClick={handleLogout} className='bg-[#E21833] hover:bg-red-700 text-white border-0' style={{ cursor: 'pointer' }}>
           <LogOut className='w-4 h-4 mr-2' />Logout
         </Button>
+        </div>
       </div>
 
       <div className='px-6 pt-4 flex gap-3 flex-wrap'>
         <button onClick={() => setActiveTab('allStudents')}
           className='px-6 py-2 rounded-full font-bold text-sm transition-all'
           style={{ background: activeTab === 'allStudents' ? 'white' : 'rgba(255,255,255,0.2)', color: activeTab === 'allStudents' ? '#E21833' : 'white', cursor: 'pointer', border: 'none' }}>
-          All Students
+          All Students ({sportMatchedStudents.length})
         </button>
         <button onClick={() => setActiveTab('myStudents')}
           className='px-6 py-2 rounded-full font-bold text-sm transition-all'
@@ -182,7 +180,7 @@ export default function MyStudents() {
         <button onClick={() => setActiveTab('appointments')}
           className='px-6 py-2 rounded-full font-bold text-sm transition-all flex items-center gap-2'
           style={{ background: activeTab === 'appointments' ? 'white' : 'rgba(255,255,255,0.2)', color: activeTab === 'appointments' ? '#E21833' : 'white', cursor: 'pointer', border: 'none' }}>
-          <Clock className='w-4 h-4' />Appointments
+          <Clock className='w-4 h-4' />Appointments {pendingAppointments.length > 0 && `(${pendingAppointments.length})`}
           {pendingAppointments.length > 0 && activeTab !== 'appointments' && (
             <span className='w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center' style={{ background: '#FFD200', color: '#333' }}>{pendingAppointments.length}</span>
           )}
@@ -336,3 +334,7 @@ export default function MyStudents() {
     </div>
   );
 }
+
+
+
+
