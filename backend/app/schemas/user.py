@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Literal
 
 class UserCreate(BaseModel):
-    auth0_id: str
+    firebase_uid: str
     email: EmailStr
     name: str
     phone: Optional[str] = None

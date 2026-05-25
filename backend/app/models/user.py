@@ -3,7 +3,7 @@ from typing import Optional, List, Literal
 from pydantic import EmailStr
 
 class User(Document):
-    auth0_id: str
+    firebase_uid: str
     email: EmailStr
     name: str
     phone: Optional[str] = None
