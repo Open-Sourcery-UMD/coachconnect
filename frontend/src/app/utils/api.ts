@@ -27,6 +27,8 @@ export async function saveCoachToDB(formData: any) {
       certification: formData.certification || '',
       rate: formData.rate || '',
       availability: formData.availability || [],
+      sport_details: Object.fromEntries(Object.entries(formData.sportDetails || {}).map(([sport, d]: [string, any]) => [sport, { coachingYears: d.coachingYears, playingYears: d.playingYears, achievements: d.achievements }])),
+      sport_details: Object.fromEntries(Object.entries(formData.sportDetails || {}).map(([sport, d]: [string, any]) => [sport, { coachingYears: d.coachingYears, playingYears: d.playingYears, achievements: d.achievements, videoLink: d.videoLink || '' }])),
     })
   })
   const data = await response.json()
@@ -157,5 +159,17 @@ export async function deleteConnection(connectionId: string) {
 
 export async function deleteStudentAppointments(coachId: string, studentId: string) {
   const response = await fetch(API_URL + '/appointments/coach/' + coachId + '/student/' + studentId, { method: 'DELETE' });
+  return response.json();
+}
+
+export async function updateUserProfile(firebaseUid: string, data: object) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Not logged in');
+  const token = await user.getIdToken();
+  const response = await fetch(API_URL + '/users/' + firebaseUid, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify(data)
+  });
   return response.json();
 }

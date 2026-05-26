@@ -9,11 +9,14 @@ import { getCoaches, getStudentConnections, createAppointment, getStudentAppoint
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import WeeklyCalendar from '../components/WeeklyCalendar';
+import ProfileModal from '../components/ProfileModal';
 
 interface Coach {
   id: string; firebase_uid: string; name: string; email: string; phone: string;
   expertise: string[]; coaching_style: string; rate: string;
   availability: string[]; role: string; gender?: string; competition_level?: string[];
+  sport_details?: Record<string, { coachingYears: string; playingYears: string; achievements: string; videoLink: string }>;
+  certification?: string;
 }
 
 interface Appointment {
@@ -37,6 +40,8 @@ export default function Results() {
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState<string>('');
   const [userFullName, setUserFullName] = useState<string>('');
+  const [userInterests, setUserInterests] = useState<string[]>([]);
+  const [showProfile, setShowProfile] = useState(false);
   const [selectedSports, setSelectedSports] = useState<string[]>(sports);
   const [selectedLevel, setSelectedLevel] = useState<string>('');
   const [maxRate, setMaxRate] = useState<string>('');
@@ -57,6 +62,7 @@ export default function Results() {
   useEffect(() => {
     if (activeTab === 'myAppointments') fetchAppointments();
   }, [activeTab]);
+  useEffect(() => { if (!showProfile) fetchUserName(); }, [showProfile]);
 
   const fetchUserName = async () => {
     const user = auth.currentUser;
@@ -68,6 +74,7 @@ export default function Results() {
         setUserName(data.name.split(' ')[0]);
         setUserFullName(data.name);
       }
+      if (data.interests) setUserInterests(data.interests);
     } catch (err) { console.error(err); }
   };
 
@@ -164,6 +171,7 @@ export default function Results() {
     <div className='min-h-screen' style={{ background: 'linear-gradient(135deg, #E21833 0%, #FF6B35 50%, #FFD200 100%)' }}>
       <div className='px-6 py-4 flex items-center justify-between sticky top-0 z-20' style={{ background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(10px)' }}>
         <p className='text-white font-bold text-xl'>Welcome Back{userName ? ', ' + userName : ''}</p>
+        <Button onClick={() => setShowProfile(true)} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', marginRight: '4px' }}>Profile</Button>
         <Button onClick={() => navigate('/messages')} className='mr-2' style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
           <MessageCircle className='w-4 h-4 mr-2' />Messages
         </Button>
@@ -377,7 +385,7 @@ export default function Results() {
                 <h3 className='font-bold text-gray-800 mb-1'>About</h3>
                 <p className='text-gray-600 text-sm'>{selectedCoach.coaching_style || 'Passionate coach.'}</p>
               </div>
-              <div>
+              {selectedCoach.sport_details && Object.keys(selectedCoach.sport_details).length > 0 && (<div className='space-y-2'><h3 className='font-bold text-gray-800 mb-2'>Experience by Sport</h3>{Object.entries(selectedCoach.sport_details).map(([sport, d]: [string, any]) => (<div key={sport} className='rounded-xl p-3 border' style={{background:'#FAFAFA'}}><p className='font-bold text-sm mb-1' style={{color:'#E21833'}}>{sport}</p><div className='grid grid-cols-2 gap-1 text-xs text-gray-600 mb-1'><span>Coaching: {d.coachingYears} yrs</span><span>Playing: {d.playingYears} yrs</span></div>{d.achievements && <p className='text-xs text-gray-500 italic mb-1'>{d.achievements}</p>}{d.videoLink && <a href={d.videoLink} target='_blank' rel='noopener noreferrer' className='text-xs text-blue-500 underline'>Watch Video</a>}</div>))}</div>)}{selectedCoach.certification && (<div><h3 className='font-bold text-gray-800 mb-1'>Certification</h3><p className='text-sm text-gray-600'>{selectedCoach.certification}</p></div>)}<div>
                 <h3 className='font-bold text-gray-800 mb-2 flex items-center gap-2'><Calendar className='w-4 h-4' />Availability</h3>
                 <div className='border rounded-xl overflow-hidden text-sm'>
                   {Object.entries(getScheduleByDay(selectedCoach.availability || [])).map(([day, times]) => (
@@ -407,7 +415,7 @@ export default function Results() {
                     <Calendar className='w-4 h-4 mr-2' />Book Session
                   </Button>
                 ) : (
-                  <Button className='flex-1 py-5 text-base font-semibold rounded-xl' style={{ background: '#E21833', color: 'white', cursor: 'pointer' }} onClick={() => handleConnect(selectedCoach)}>Connect with Coach</Button>
+                  userInterests.length === 0 || selectedCoach.expertise.some(e => userInterests.includes(e)) ? (<Button className='flex-1 py-5 text-base font-semibold rounded-xl' style={{ background: '#E21833', color: 'white', cursor: 'pointer' }} onClick={() => handleConnect(selectedCoach)}>Connect with Coach</Button>) : (<Button className='flex-1 py-5 text-base font-semibold rounded-xl' disabled style={{ background: '#ccc', color: '#888', cursor: 'not-allowed' }}>Not Available for Your Sports</Button>)
                 )}
                 <Button variant='outline' className='rounded-xl' style={{ cursor: 'pointer' }} onClick={() => setIsProfileOpen(false)}>Close</Button>
               </div>
@@ -458,7 +466,15 @@ export default function Results() {
         </DialogContent>
       </Dialog>
 
+      {showProfile && <ProfileModal role='student' onClose={() => setShowProfile(false)} />}
       <Footer />
     </div>
   );
 }
+
+
+
+
+
+
+

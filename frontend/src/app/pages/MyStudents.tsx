@@ -8,6 +8,7 @@ import { getStudents, getCoachConnections, getCoachAppointments, acceptAppointme
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import WeeklyCalendar from '../components/WeeklyCalendar';
+import ProfileModal from '../components/ProfileModal';
 
 interface Student {
   id: string; firebase_uid: string; name: string; email: string; phone: string;
@@ -35,6 +36,10 @@ export default function MyStudents() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
   const [pendingDeleteStudent, setPendingDeleteStudent] = useState<Student | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editSportDetails, setEditSportDetails] = useState<Record<string,{coachingYears:string;playingYears:string;achievements:string}>>({});
+  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
     fetchStudents();
@@ -102,6 +107,7 @@ export default function MyStudents() {
 
   const handleDeleteStudent = (student: Student) => { setPendingDeleteStudent(student); };
   const confirmDeleteStudent = async () => { if (!pendingDeleteStudent) return; const user = auth.currentUser; if (!user) return; const conn = myStudents.find(c => c.student_id === pendingDeleteStudent.firebase_uid); if (conn) { await deleteConnection(conn.id); await deleteStudentAppointments(user.uid, pendingDeleteStudent.firebase_uid); setMyStudents(prev => prev.filter(c => c.student_id !== pendingDeleteStudent.firebase_uid)); } setPendingDeleteStudent(null); };
+  
   const handleLogout = async () => { await signOut(auth); navigate('/'); };
   const sportMatchedStudents = students.filter(s => { const sport = selectedSport || null; if (sport) return s.interests.includes(sport); return coachSports.length === 0 || s.interests.some(i => coachSports.includes(i)); });
   const myConnectedStudents = students.filter(s => myStudents.some(c => c.student_id === s.firebase_uid));
@@ -160,7 +166,9 @@ export default function MyStudents() {
           <p className='text-white font-bold text-xl'>Welcome Back{userName ? ', ' + userName : ''}</p>
         </div>
         <div className='flex items-center gap-3'>
-        {coachSports.length > 0 && (<div style={{position:'relative',marginRight:'8px'}}><button onClick={() => setShowAllSports(p=>!p)} style={{background:'rgba(255,255,255,0.2)',color:'white',border:'1px solid rgba(255,255,255,0.3)',cursor:'pointer',borderRadius:'999px',padding:'6px 16px',fontSize:'13px',fontWeight:'700',display:'flex',alignItems:'center',gap:'6px'}}>{selectedSport || coachSports[0]}{coachSports.length > 1 && (showAllSports ? ' ?' : ' ?')}</button>{showAllSports && coachSports.length > 1 && (<div style={{position:'absolute',top:'110%',right:0,background:'rgba(20,20,20,0.95)',borderRadius:'12px',padding:'8px',zIndex:50,minWidth:'150px',boxShadow:'0 4px 20px rgba(0,0,0,0.4)'}}>{['All Sports',...coachSports].map(s=><div key={s} onClick={()=>{setSelectedSport(s==='All Sports'?'':s);setShowAllSports(false);}} style={{padding:'8px 12px',color: selectedSport===s||(!selectedSport&&s==='All Sports')?'#FFD200':'white',fontSize:'13px',fontWeight:'600',cursor:'pointer',borderRadius:'8px'}}>{s}</div>)}</div>)}</div>)}<Button onClick={() => navigate('/messages')} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
+        {coachSports.length > 0 && (<div style={{position:'relative',marginRight:'8px'}}><button onClick={() => setShowAllSports(p=>!p)} style={{background:'rgba(255,255,255,0.2)',color:'white',border:'1px solid rgba(255,255,255,0.3)',cursor:'pointer',borderRadius:'999px',padding:'6px 16px',fontSize:'13px',fontWeight:'700',display:'flex',alignItems:'center',gap:'6px'}}>{selectedSport || coachSports[0]}{coachSports.length > 1 && (showAllSports ? ' ?' : ' ?')}</button>{showAllSports && coachSports.length > 1 && (<div style={{position:'absolute',top:'110%',right:0,background:'rgba(20,20,20,0.95)',borderRadius:'12px',padding:'8px',zIndex:50,minWidth:'150px',boxShadow:'0 4px 20px rgba(0,0,0,0.4)'}}>{['All Sports',...coachSports].map(s=><div key={s} onClick={()=>{setSelectedSport(s==='All Sports'?'':s);setShowAllSports(false);}} style={{padding:'8px 12px',color: selectedSport===s||(!selectedSport&&s==='All Sports')?'#FFD200':'white',fontSize:'13px',fontWeight:'600',cursor:'pointer',borderRadius:'8px'}}>{s}</div>)}</div>)}</div>)}
+        <Button onClick={() => setShowProfile(true)} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', marginRight: '4px' }}>Profile</Button>
+        <Button onClick={() => navigate('/messages')} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
           <MessageCircle className='w-4 h-4 mr-2' />Messages
         </Button>
         <Button onClick={handleLogout} className='bg-[#E21833] hover:bg-red-700 text-white border-0' style={{ cursor: 'pointer' }}>
@@ -333,11 +341,14 @@ export default function MyStudents() {
       )}
 
       <div className='flex-1'></div>
+      {showEditProfile && (<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px'}}><div style={{background:'white',borderRadius:'20px',padding:'28px',maxWidth:'500px',width:'100%',maxHeight:'80vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}><h3 style={{fontWeight:'800',fontSize:'20px',marginBottom:'4px'}}>Edit Experience</h3><p style={{color:'#888',fontSize:'13px',marginBottom:'20px'}}>Add your coaching details per sport</p>{coachSports.map(sport => (<div key={sport} style={{marginBottom:'20px',padding:'16px',borderRadius:'12px',border:'1px solid #eee',background:'#fafafa'}}><p style={{fontWeight:'700',color:'#E21833',marginBottom:'12px'}}>{sport}</p><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'10px'}}><div><label style={{fontSize:'12px',fontWeight:'600',color:'#666',display:'block',marginBottom:'4px'}}>Coaching Years</label><input type='number' min='0' value={editSportDetails[sport]?.coachingYears||''} onChange={e=>setEditSportDetails(p=>({...p,[sport]:{...p[sport],coachingYears:e.target.value}}))} style={{width:'100%',padding:'8px 10px',borderRadius:'8px',border:'1px solid #ddd',fontSize:'13px'}} /></div><div><label style={{fontSize:'12px',fontWeight:'600',color:'#666',display:'block',marginBottom:'4px'}}>Playing Years</label><input type='number' min='0' value={editSportDetails[sport]?.playingYears||''} onChange={e=>setEditSportDetails(p=>({...p,[sport]:{...p[sport],playingYears:e.target.value}}))} style={{width:'100%',padding:'8px 10px',borderRadius:'8px',border:'1px solid #ddd',fontSize:'13px'}} /></div></div><div><label style={{fontSize:'12px',fontWeight:'600',color:'#666',display:'block',marginBottom:'4px'}}>Achievements</label><textarea value={editSportDetails[sport]?.achievements||''} onChange={e=>setEditSportDetails(p=>({...p,[sport]:{...p[sport],achievements:e.target.value}}))} rows={2} style={{width:'100%',padding:'8px 10px',borderRadius:'8px',border:'1px solid #ddd',fontSize:'13px',resize:'none'}} placeholder='Awards, titles, experience...' /></div></div>))}<div style={{display:'flex',gap:'10px',justifyContent:'flex-end',marginTop:'8px'}}><button onClick={()=>setShowEditProfile(false)} style={{padding:'10px 20px',borderRadius:'10px',border:'1px solid #ddd',cursor:'pointer',background:'white',fontWeight:'600'}}>Cancel</button><button onClick={handleSaveProfile} disabled={savingProfile} style={{padding:'10px 20px',borderRadius:'10px',border:'none',cursor:'pointer',background:'#E21833',color:'white',fontWeight:'700'}}>{savingProfile?'Saving...':'Save'}</button></div></div></div>)}
+      {showProfile && <ProfileModal role='coach' onClose={() => setShowProfile(false)} />}
       {pendingDeleteStudent && (<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{background:'white',borderRadius:'16px',padding:'24px',maxWidth:'400px',width:'90%',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}><h3 style={{fontWeight:'700',fontSize:'18px',marginBottom:'8px'}}>Remove Student</h3><p style={{color:'#666',marginBottom:'20px',fontSize:'14px'}}>Remove {pendingDeleteStudent.name} from My Students? This will also delete all appointments with them.</p><div style={{display:'flex',gap:'12px',justifyContent:'flex-end'}}><button onClick={() => setPendingDeleteStudent(null)} style={{padding:'8px 16px',borderRadius:'8px',border:'1px solid #ddd',cursor:'pointer',background:'white',fontWeight:'600'}}>Cancel</button><button onClick={confirmDeleteStudent} style={{padding:'8px 16px',borderRadius:'8px',border:'none',cursor:'pointer',background:'#E21833',color:'white',fontWeight:'700'}}>Remove</button></div></div></div>)}
       <Footer />
     </div>
   );
 }
+
 
 
 
