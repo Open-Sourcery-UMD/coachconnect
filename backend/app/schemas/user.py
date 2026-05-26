@@ -24,6 +24,7 @@ class UserCreate(BaseModel):
     goals: Optional[str] = None
     budget: Optional[str] = None
     preferred_times: Optional[List[str]] = []
+    sport_details: Optional[dict] = {}
 
 class UserResponse(BaseModel):
     id: str

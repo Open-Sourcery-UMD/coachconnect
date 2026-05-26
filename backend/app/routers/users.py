@@ -67,3 +67,16 @@ async def get_user(auth0_id: str):
     d = user.dict()
     d['id'] = str(user.id)
     return d
+
+@router.patch('/{firebase_uid}')
+async def update_user(firebase_uid: str, data: dict):
+    user = await User.find_one(User.firebase_uid == firebase_uid)
+    if not user:
+        raise HTTPException(status_code=404, detail='User not found')
+    for key, value in data.items():
+        if hasattr(user, key):
+            setattr(user, key, value)
+    await user.save()
+    d = user.dict()
+    d['id'] = str(user.id)
+    return d

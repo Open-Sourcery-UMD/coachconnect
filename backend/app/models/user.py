@@ -26,5 +26,7 @@ class User(Document):
     budget: Optional[str] = None
     preferred_times: Optional[List[str]] = []
 
+    sport_details: Optional[dict] = {}
+
     class Settings:
         name = "users"
