@@ -41,3 +41,9 @@ async def decline_appointment(appointment_id: str):
     appt.status = 'declined'
     await appt.save()
     return {'message': 'Appointment declined'}
+@router.delete('/coach/{coach_id}/student/{student_id}')
+async def delete_appointments_between(coach_id: str, student_id: str):
+    appts = await Appointment.find(Appointment.coach_id == coach_id, Appointment.student_id == student_id).to_list()
+    for appt in appts:
+        await appt.delete()
+    return {'message': f'Deleted {len(appts)} appointments'}

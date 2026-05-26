@@ -91,7 +91,7 @@ async def get_conversations(user_id: str):
             }
 
     for partner_id, conv in seen.items():
-        partner_user = await User.find_one(User.auth0_id == partner_id)
+        partner_user = await User.find_one(User.firebase_uid == partner_id)
         if partner_user:
             conv['partner_name'] = partner_user.name
         unread_msgs = await Message.find(
