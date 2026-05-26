@@ -1,8 +1,8 @@
-﻿import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router';
 import { ArrowLeft, Send } from 'lucide-react';
 import { auth } from '../firebase';
-import { createConnection, getUserProfile, getConversationHistory, markMessagesRead, WS_URL } from '../utils/api';
+import { createConnection, getUserProfile, getConversationHistory, markMessagesRead, WS_URL, getCoachConnections } from '../utils/api';
 
 interface Message {
   id: string; sender_id: string; receiver_id: string;
@@ -29,7 +29,7 @@ export default function Conversation() {
       const user = auth.currentUser;
       if (!user) return;
       const profile = await getUserProfile(user.uid);
-      if (profile?.role === 'coach') setIsCoach(true);
+      if (profile?.role === 'coach') { setIsCoach(true); const connections = await getCoachConnections(user.uid); if (Array.isArray(connections) && connections.some((c: any) => c.student_id === userId)) setAccepted(true); }
     };
     init();
   }, []);
@@ -109,7 +109,6 @@ export default function Conversation() {
   
   
 
-  setNewMessage('');
 
 
   const formatTime = (ts: number) => new Date(ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -193,5 +192,6 @@ export default function Conversation() {
     </div>
   );
 }
+
 
 

@@ -149,3 +149,13 @@ export async function markMessagesRead(senderId: string, receiverId: string) {
 }
 
 export const WS_URL = 'ws://localhost:8000';
+
+export async function deleteConnection(connectionId: string) {
+  const response = await fetch(API_URL + '/connections/' + connectionId, { method: 'DELETE' });
+  return response.json();
+}
+
+export async function deleteStudentAppointments(coachId: string, studentId: string) {
+  const response = await fetch(API_URL + '/appointments/coach/' + coachId + '/student/' + studentId, { method: 'DELETE' });
+  return response.json();
+}

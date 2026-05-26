@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 import { LogOut, Users, Calendar, MessageCircle, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { getStudents, getCoachConnections, getCoachAppointments, acceptAppointment, declineAppointment } from '../utils/api';
+import { getStudents, getCoachConnections, getCoachAppointments, acceptAppointment, declineAppointment, deleteConnection, deleteStudentAppointments } from '../utils/api';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import WeeklyCalendar from '../components/WeeklyCalendar';
@@ -34,6 +34,7 @@ export default function MyStudents() {
   const [selectedSport, setSelectedSport] = useState<string>('');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+  const [pendingDeleteStudent, setPendingDeleteStudent] = useState<Student | null>(null);
 
   useEffect(() => {
     fetchStudents();
@@ -99,6 +100,8 @@ export default function MyStudents() {
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'declined' } : a));
   };
 
+  const handleDeleteStudent = (student: Student) => { setPendingDeleteStudent(student); };
+  const confirmDeleteStudent = async () => { if (!pendingDeleteStudent) return; const user = auth.currentUser; if (!user) return; const conn = myStudents.find(c => c.student_id === pendingDeleteStudent.firebase_uid); if (conn) { await deleteConnection(conn.id); await deleteStudentAppointments(user.uid, pendingDeleteStudent.firebase_uid); setMyStudents(prev => prev.filter(c => c.student_id !== pendingDeleteStudent.firebase_uid)); } setPendingDeleteStudent(null); };
   const handleLogout = async () => { await signOut(auth); navigate('/'); };
   const sportMatchedStudents = students.filter(s => { const sport = selectedSport || null; if (sport) return s.interests.includes(sport); return coachSports.length === 0 || s.interests.some(i => coachSports.includes(i)); });
   const myConnectedStudents = students.filter(s => myStudents.some(c => c.student_id === s.firebase_uid));
@@ -112,7 +115,7 @@ export default function MyStudents() {
     return { bg: '#F5F5F5', color: '#333', label: level || 'Unknown' };
   };
 
-  const renderStudentCard = (student: Student, showMyBadge = false) => {
+  const renderStudentCard = (student: Student, showMyBadge = false, showDelete = false) => {
     const badge = getLevelBadge(student.level);
     return (
       <div key={student.id} className='rounded-2xl overflow-hidden' style={{ background: 'rgba(255,255,255,0.95)' }}>
@@ -125,7 +128,7 @@ export default function MyStudents() {
             <div className='flex-1 min-w-0'>
               <div className='flex items-center gap-2'>
                 <h3 className='text-base font-bold text-gray-900 truncate'>{student.name}</h3>
-                {showMyBadge && <span className='text-xs px-2 py-0.5 rounded-full font-bold' style={{ background: '#E8F5E9', color: '#2E7D32' }}>My Student</span>}
+                {showMyBadge && <span className='text-xs px-2 py-0.5 rounded-full font-bold' style={{ background: '#E8F5E9', color: '#2E7D32' }}>My Student</span>}{showDelete && <button onClick={() => handleDeleteStudent(student)} style={{ background: '#FFEBEE', border: 'none', cursor: 'pointer', color: '#E21833', fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '8px', marginLeft: '4px' }}>Remove</button>}
               </div>
               <p className='text-xs text-gray-500'>Class of {student.graduation_year || 'N/A'}</p>
               <span className='px-2 py-0.5 rounded-full text-xs font-semibold mt-0.5 inline-block' style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
@@ -225,7 +228,7 @@ export default function MyStudents() {
             </Alert>
           ) : (
             <div className='grid gap-5 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
-              {myConnectedStudents.map((student: Student) => renderStudentCard(student, true))}
+              {myConnectedStudents.map((student: Student) => renderStudentCard(student, true, true))}
             </div>
           )}
         </div>
@@ -330,6 +333,7 @@ export default function MyStudents() {
       )}
 
       <div className='flex-1'></div>
+      {pendingDeleteStudent && (<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{background:'white',borderRadius:'16px',padding:'24px',maxWidth:'400px',width:'90%',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}><h3 style={{fontWeight:'700',fontSize:'18px',marginBottom:'8px'}}>Remove Student</h3><p style={{color:'#666',marginBottom:'20px',fontSize:'14px'}}>Remove {pendingDeleteStudent.name} from My Students? This will also delete all appointments with them.</p><div style={{display:'flex',gap:'12px',justifyContent:'flex-end'}}><button onClick={() => setPendingDeleteStudent(null)} style={{padding:'8px 16px',borderRadius:'8px',border:'1px solid #ddd',cursor:'pointer',background:'white',fontWeight:'600'}}>Cancel</button><button onClick={confirmDeleteStudent} style={{padding:'8px 16px',borderRadius:'8px',border:'none',cursor:'pointer',background:'#E21833',color:'white',fontWeight:'700'}}>Remove</button></div></div></div>)}
       <Footer />
     </div>
   );
