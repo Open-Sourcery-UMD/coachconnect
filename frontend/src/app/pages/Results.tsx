@@ -41,6 +41,7 @@ export default function Results() {
   const [userName, setUserName] = useState<string>('');
   const [userFullName, setUserFullName] = useState<string>('');
   const [userInterests, setUserInterests] = useState<string[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [selectedSports, setSelectedSports] = useState<string[]>(sports);
   const [selectedLevel, setSelectedLevel] = useState<string>('');
@@ -57,6 +58,7 @@ export default function Results() {
     fetchCoaches();
     fetchUserName();
     fetchMyConnections();
+    const u = auth.currentUser; if (u) fetch('http://localhost:8000/messages/conversations/' + u.uid).then(r=>r.json()).then((data:any[])=>{ if(Array.isArray(data)) setUnreadCount(data.reduce((s,c)=>s+(c.unread||0),0)); });
   }, []);
 
   useEffect(() => {
@@ -173,7 +175,7 @@ export default function Results() {
         <p className='text-white font-bold text-xl'>Welcome Back{userName ? ', ' + userName : ''}</p>
         <Button onClick={() => setShowProfile(true)} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', marginRight: '4px' }}>Profile</Button>
         <Button onClick={() => navigate('/messages')} className='mr-2' style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
-          <MessageCircle className='w-4 h-4 mr-2' />Messages
+          <MessageCircle className='w-4 h-4 mr-2' />Messages{unreadCount > 0 && <span style={{background:'#FFD200',color:'#333',borderRadius:'999px',fontSize:'11px',fontWeight:'700',padding:'1px 6px',marginLeft:'6px'}}>{unreadCount}</span>}
         </Button>
         <Button variant='outline' onClick={handleLogout} className='bg-[#E21833] text-white hover:bg-red-700 border-0' style={{ cursor: 'pointer' }}>
           <LogOut className='w-4 h-4 mr-2' />Logout
@@ -471,6 +473,7 @@ export default function Results() {
     </div>
   );
 }
+
 
 
 

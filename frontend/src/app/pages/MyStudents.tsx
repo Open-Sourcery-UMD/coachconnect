@@ -35,6 +35,7 @@ export default function MyStudents() {
   const [selectedSport, setSelectedSport] = useState<string>('');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [pendingDeleteStudent, setPendingDeleteStudent] = useState<Student | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -45,6 +46,7 @@ export default function MyStudents() {
     fetchStudents();
     fetchUserName();
     fetchMyStudents();
+    const u = auth.currentUser; if (u) fetch('http://localhost:8000/messages/conversations/' + u.uid).then(r=>r.json()).then((data:any[])=>{ if(Array.isArray(data)) setUnreadCount(data.reduce((s,c)=>s+(c.unread||0),0)); });
   }, []);
 
   useEffect(() => {
@@ -166,10 +168,10 @@ export default function MyStudents() {
           <p className='text-white font-bold text-xl'>Welcome Back{userName ? ', ' + userName : ''}</p>
         </div>
         <div className='flex items-center gap-3'>
-        {coachSports.length > 0 && (<div style={{position:'relative',marginRight:'8px'}}><button onClick={() => setShowAllSports(p=>!p)} style={{background:'rgba(255,255,255,0.2)',color:'white',border:'1px solid rgba(255,255,255,0.3)',cursor:'pointer',borderRadius:'999px',padding:'6px 16px',fontSize:'13px',fontWeight:'700',display:'flex',alignItems:'center',gap:'6px'}}>{selectedSport || coachSports[0]}{coachSports.length > 1 && (showAllSports ? ' ?' : ' ?')}</button>{showAllSports && coachSports.length > 1 && (<div style={{position:'absolute',top:'110%',right:0,background:'rgba(20,20,20,0.95)',borderRadius:'12px',padding:'8px',zIndex:50,minWidth:'150px',boxShadow:'0 4px 20px rgba(0,0,0,0.4)'}}>{['All Sports',...coachSports].map(s=><div key={s} onClick={()=>{setSelectedSport(s==='All Sports'?'':s);setShowAllSports(false);}} style={{padding:'8px 12px',color: selectedSport===s||(!selectedSport&&s==='All Sports')?'#FFD200':'white',fontSize:'13px',fontWeight:'600',cursor:'pointer',borderRadius:'8px'}}>{s}</div>)}</div>)}</div>)}
+        {coachSports.length > 0 && (<div style={{position:'relative',marginRight:'8px'}}><button onClick={() => setShowAllSports(p=>!p)} style={{background:'rgba(255,255,255,0.2)',color:'white',border:'1px solid rgba(255,255,255,0.3)',cursor:'pointer',borderRadius:'999px',padding:'6px 16px',fontSize:'13px',fontWeight:'700',display:'flex',alignItems:'center',gap:'6px'}}>{selectedSport || (coachSports.length > 1 ? 'All Sports' : coachSports[0])}</button>{showAllSports && coachSports.length > 1 && (<div style={{position:'absolute',top:'110%',right:0,background:'rgba(20,20,20,0.95)',borderRadius:'12px',padding:'8px',zIndex:50,minWidth:'150px',boxShadow:'0 4px 20px rgba(0,0,0,0.4)'}}>{['All Sports',...coachSports].map(s=><div key={s} onClick={()=>{setSelectedSport(s==='All Sports'?'':s);setShowAllSports(false);}} style={{padding:'8px 12px',color: selectedSport===s||(!selectedSport&&s==='All Sports')?'#FFD200':'white',fontSize:'13px',fontWeight:'600',cursor:'pointer',borderRadius:'8px'}}>{s}</div>)}</div>)}</div>)}
         <Button onClick={() => setShowProfile(true)} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', marginRight: '4px' }}>Profile</Button>
         <Button onClick={() => navigate('/messages')} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
-          <MessageCircle className='w-4 h-4 mr-2' />Messages
+          <MessageCircle className='w-4 h-4 mr-2' />Messages{unreadCount > 0 && <span style={{background:'#FFD200',color:'#333',borderRadius:'999px',fontSize:'11px',fontWeight:'700',padding:'1px 6px',marginLeft:'6px'}}>{unreadCount}</span>}
         </Button>
         <Button onClick={handleLogout} className='bg-[#E21833] hover:bg-red-700 text-white border-0' style={{ cursor: 'pointer' }}>
           <LogOut className='w-4 h-4 mr-2' />Logout
@@ -348,6 +350,7 @@ export default function MyStudents() {
     </div>
   );
 }
+
 
 
 
